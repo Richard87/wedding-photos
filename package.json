@@ -1,24 +1,27 @@
 {
-  "name": "wedding-photos",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
-  },
-  "dependencies": {
-    "react": "^18",
-    "react-dom": "^18",
-    "next": "14.2.4"
-  },
-  "devDependencies": {
-    "typescript": "^5",
-    "@types/node": "^20",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
-    "postcss": "^8",
-    "tailwindcss": "^3.4.1"
-  }
+	"name": "wedding-photos",
+	"version": "0.1.0",
+	"private": true,
+	"scripts": {
+		"dev": "next dev",
+		"build": "next build",
+		"start": "next start",
+		"lint": "next lint"
+	},
+	"dependencies": {
+		"@biomejs/biome": "^1.8.3",
+		"minio": "^8.0.1",
+		"next": "14.2.4",
+		"react": "^18",
+		"react-dom": "^18",
+		"react-uploader": "^3.43.0"
+	},
+	"devDependencies": {
+		"@types/node": "^20",
+		"@types/react": "^18",
+		"@types/react-dom": "^18",
+		"postcss": "^8",
+		"tailwindcss": "^3.4.1",
+		"typescript": "^5"
+	}
 }
