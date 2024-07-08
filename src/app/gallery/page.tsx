@@ -5,6 +5,7 @@ import { getServerAuthSession } from "@/server/auth";
 import { ulid } from "ulidx";
 
 import * as Minio from "minio";
+import type { Image } from "@/types/image";
 
 const minioClient = new Minio.Client({
 	endPoint: "127.0.0.1",
@@ -33,14 +34,20 @@ export default async function HomePage() {
 	if (!user) throw new Error("Not authenticated!");
 
 	const files = await listObjects("wedding", `${user.name}_photos/`);
-	const images = [];
+	const images: Image[] = [];
 	for (const file of files) {
 		const url = await minioClient.presignedGetObject(
 			"wedding",
 			file.name as string,
 			500,
 		);
-		images.push({ ...file, url });
+		images.push({
+			etag: file.etag,
+			lastModified: file.lastModified?.toISOString(),
+			name: file.name as string,
+			size: file.size,
+			url,
+		});
 	}
 
 	const getSignedUrl = async (username: string, ratio: string) => {
