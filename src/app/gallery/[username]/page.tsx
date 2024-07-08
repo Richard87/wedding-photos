@@ -40,17 +40,11 @@ export default async function GalleryPage({
 		return await getSignedObjectUploadUrl(filename);
 	};
 
-	const revalidate = () => {
-		"use server";
-		revalidatePath(`/gallery/${user.name}`);
-	};
-
 	return (
-		<main className="flex items-center justify-center h-screen">
+		<main>
 			<Gallery
 				username={authSession.user.name as string}
 				getSignedUrl={getSignedUrl}
-				revalidate={revalidate}
 				images={images}
 			/>
 		</main>

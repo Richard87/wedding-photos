@@ -9,7 +9,7 @@ const minioClient = new Minio.Client({
 	secretKey: process.env.S3_SECRET_KEY as string,
 });
 
-export function listObjects(path: string): Promise<Minio.BucketItem[]> {
+export async function listObjects(path: string): Promise<Minio.BucketItem[]> {
 	return new Promise((resolve, reject) => {
 		const images: Minio.BucketItem[] = [];
 		const imagesStream = minioClient.listObjects("wedding", path);
@@ -18,6 +18,7 @@ export function listObjects(path: string): Promise<Minio.BucketItem[]> {
 		imagesStream.on("end", () => resolve(images));
 	});
 }
+
 export async function getSignedObjectFetchUrl(path: string, ttl = 500) {
     return await minioClient.presignedGetObject(
         process.env.S3_BUCKET as string,
