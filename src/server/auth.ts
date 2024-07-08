@@ -33,8 +33,8 @@ export const authOptions: NextAuthOptions = {
 				};
 
 				return {
-          email: "unused@unused.com",
-          id: "0",
+          email: username,
+          id: username,
 					name: username,
 				};
 			},
