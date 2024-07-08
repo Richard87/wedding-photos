@@ -1,16 +1,67 @@
-import Gallery from "@/components/Gallery";
-import UserInfo from "@/components/UserInfo";
-import { getServerAuthSession } from "@/server/auth";
-import Link from "next/link";
+"use client";
+import { signIn } from "next-auth/react";
+import React from "react";
+import { type ChangeEvent, type FormEvent, useState } from "react";
 
+type LoginInput = {
+	username: string;
+};
 
+type PageProps = {
+	searchParams: { error?: string };
+};
 
-export default async function HomePage() {
-  return (  
-  <main className="flex items-center justify-center h-screen">
-      <Link className="font-medium mt-2 text-blue-600 hover:underline" href="/login">
-        Login
-      </Link>
-  </main>
-  );
+export default function LoginPage({ searchParams }: PageProps) {
+	const [username, setUsername] = useState<string>("");
+
+	const handleSubmit = async (event: FormEvent) => {
+		event.preventDefault();
+		await signIn("credentials", {
+			username: username,
+			callbackUrl: `/gallery/${username}`,
+		});
+	};
+	return (
+		<>
+			<div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
+				<div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+					<form className="space-y-6" onSubmit={handleSubmit}>
+						<div>
+							<label
+								htmlFor="username"
+								className="block text-sm font-medium leading-6 text-gray-900"
+							>
+								Username
+							</label>
+							<div className="mt-2">
+								<input
+									id="username"
+									name="username"
+									type="text"
+									autoComplete="off"
+									required
+									value={username}
+									onChange={(e) => setUsername(e.target.value)}
+									className="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+								/>
+							</div>
+						</div>
+						<div>
+							<button
+								type="submit"
+								className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+							>
+								Sign in
+							</button>
+						</div>
+						{searchParams.error && (
+							<p className="text-red-600 text-center capitalize">
+								Login failed.
+							</p>
+						)}
+					</form>
+				</div>
+			</div>
+		</>
+	);
 }

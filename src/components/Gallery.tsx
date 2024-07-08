@@ -1,6 +1,6 @@
 "use client";
-import type { User } from "@/types/user";
 import type { Image } from "@/types/image";
+import type { User } from "@/types/user";
 import React, { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import Lightbox from "yet-another-react-lightbox";

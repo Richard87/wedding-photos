@@ -1,9 +1,5 @@
+import { Button, Navbar, Typography } from "@material-tailwind/react";
 import React from "react";
-import {
-	Navbar,
-	Typography,
-	Button,
-} from "@material-tailwind/react";
 
 export function NavbarDefault() {
 	return (
