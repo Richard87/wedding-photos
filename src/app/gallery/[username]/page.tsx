@@ -67,10 +67,10 @@ export default async function GalleryPage({ params }: { params: { username: stri
 	return (
 		<main className="flex items-center justify-center h-screen">
 			<Gallery
-				user={authSession.user}
+				username={authSession.user.name as string}
 				getSignedUrl={getSignedUrl}
-				images={images}
 				revalidate={revalidate}
+				images={images}
 			/>
 		</main>
 	);

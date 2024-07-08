@@ -7,14 +7,14 @@ import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
 
 type Props = {
-	user: User;
+	username: string;
 	images: Image[];
 	getSignedUrl: (username: string, ratio: string) => Promise<string>;
 	revalidate: () => unknown;
 };
 
 export default function Gallery({
-	user,
+	username,
 	images,
 	getSignedUrl,
 	revalidate,
@@ -25,7 +25,7 @@ export default function Gallery({
 			for (const image of acceptedFiles) {
 				const { width, height } = await getImageDimensions(image);
 				const ratio = (width / height).toFixed(5);
-				const url = await getSignedUrl(user.name as string, ratio);
+				const url = await getSignedUrl(username as string, ratio);
 
 				console.log(url);
 				await fetch(url, { body: image, method: "PUT" });
@@ -34,14 +34,14 @@ export default function Gallery({
 
 			revalidate();
 		},
-		[user.name, getSignedUrl, revalidate],
+		[username, getSignedUrl, revalidate],
 	);
 	const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
-    
+
 	return (
 		<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
 			<div {...getRootProps()}>
-				<h1>{user.name}</h1>
+				<h1>{username}</h1>
 				<input {...getInputProps()} />
 				{isDragActive ? (
 					<p>Drop the files here ...</p>
