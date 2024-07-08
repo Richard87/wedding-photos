@@ -3,9 +3,11 @@
 import Gallery from "@/components/Gallery";
 import { getServerAuthSession } from "@/server/auth";
 import { ulid } from "ulidx";
-
 import * as Minio from "minio";
+import { revalidatePath } from "next/cache";
+
 import type { Image } from "@/types/image";
+import { NavbarDefault } from "@/components/Navbar";
 
 const minioClient = new Minio.Client({
 	endPoint: "127.0.0.1",
@@ -28,10 +30,10 @@ function listObjects(
 	});
 }
 
-export default async function HomePage() {
+export default async function GalleryPage({ params }: { params: { username: string } }) {
 	const authSession = await getServerAuthSession();
 	const user = authSession?.user;
-	if (!user) throw new Error("Not authenticated!");
+	if (!user || user.name !== params.username) throw new Error("Not authenticated!");
 
 	const files = await listObjects("wedding", `${user.name}_photos/`);
 	const images: Image[] = [];
@@ -46,7 +48,7 @@ export default async function HomePage() {
 			lastModified: file.lastModified?.toISOString(),
 			name: file.name as string,
 			size: file.size,
-			url,
+			src: url,
 		});
 	}
 
@@ -57,12 +59,18 @@ export default async function HomePage() {
 		return await minioClient.presignedPutObject("wedding", filename, 5_000);
 	};
 
+	const revalidate = () => {
+		"use server";
+		revalidatePath(`/gallery/${user.name}`);
+	};
+
 	return (
 		<main className="flex items-center justify-center h-screen">
 			<Gallery
 				user={authSession.user}
 				getSignedUrl={getSignedUrl}
 				images={images}
+				revalidate={revalidate}
 			/>
 		</main>
 	);

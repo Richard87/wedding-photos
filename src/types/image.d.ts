@@ -3,5 +3,5 @@ export type Image = {
 	lastModified?: string | null;
 	etag?: string | null;
 	size: number;
-	url: string;
+	src: string;
 };
