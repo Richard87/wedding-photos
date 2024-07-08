@@ -5,7 +5,6 @@ import { type ChangeEvent, type FormEvent, useState } from "react";
 
 type LoginInput = {
   username: string;
-  password: string;
 }
 
 type PageProps = {
@@ -13,7 +12,7 @@ type PageProps = {
 }
 
 export default function LoginPage({searchParams}: PageProps) {
-  const [inputs, setInputs] = useState<LoginInput>({ username: "", password: "" });
+  const [inputs, setInputs] = useState<LoginInput>({ username: "" });
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const name = event.target.name;
@@ -25,8 +24,7 @@ export default function LoginPage({searchParams}: PageProps) {
     event.preventDefault();
     await signIn("credentials", { 
       username: inputs.username, 
-      password: inputs.password, 
-      callbackUrl: '/gallery' });
+      callbackUrl: `/gallery/${inputs.username}`  });
   }
   return (
     <>
