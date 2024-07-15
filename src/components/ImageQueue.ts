@@ -2,12 +2,15 @@
 
 import { revalidateGallery } from "@/server/actions";
 import { useInterval } from "@chakra-ui/react";
-import { useCallback, useReducer } from "react";
+import { useReducer } from "react";
 import { toast } from "react-toastify";
 
-export type GetSignedUrlFunc = (
+export type GetSignedUploadUrlFunc = (
 	username: string,
 	ratio: string,
+) => Promise<[string, string]>;
+export type GetSignedFetchUrlFunc = (
+	filename: string,
 ) => Promise<string>;
 
 const initState: ImageReducerState = {
@@ -35,7 +38,9 @@ type Action = {
 
 export function useImageQueue(
 	username: string,
-	getSignedUrl: GetSignedUrlFunc,
+    getSignedUploadUrl: GetSignedUploadUrlFunc, 
+    getSignedFetchUrl: GetSignedFetchUrlFunc ,
+    onUploadedImage: (filename:string, url: string) => unknown,
 ): [
 	ImageReducerState,
 	{ addImage: (image: File) => void; resetCompletedImages: () => void },
@@ -59,6 +64,8 @@ export function useImageQueue(
 					state: "uploading",
 				};
 			case ActionTypes.IMAGE_COMPLETED:
+				// if (state.queuedImages.length === 0) revalidateGallery(username);
+
 				return {
 					...state,
 					completedImages: state.completedImages++,
@@ -80,11 +87,15 @@ export function useImageQueue(
 		if (!state.inProgressImage && state.queuedImages.length > 0) {
 			const image = state.queuedImages[0];
 			uploadingImage(image);
-			getSignedUrl(username, "X")
-				.then((url) => fetch(url, { body: image, method: "PUT" }))
-				.then(() => {
+			getSignedUploadUrl(username, "X")
+				.then(([filename, url]) => {
+                    fetch(url, { body: image, method: "PUT" })
+                    return Promise.resolve(filename)
+                })
+                .then(filename => getSignedFetchUrl(filename).then(url => Promise.resolve([filename, url])))
+				.then(([filename, url]) => {
 					completedImage(image);
-					//   revalidateGallery(username)
+                    onUploadedImage(filename, url)
 				})
 				.catch((e) => {
 					console.error(e);

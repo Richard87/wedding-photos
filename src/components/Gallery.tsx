@@ -1,25 +1,27 @@
 "use client";
 import type { Image } from "@/types/image";
-import React, { act, useCallback, useEffect, useReducer, useRef } from "react";
+import React, { act, useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { Grid, GridItem } from "@chakra-ui/react";
 import { revalidateGallery } from "@/server/actions";
-import { type GetSignedUrlFunc, useImageQueue } from "./ImageQueue";
+import { useImageQueue, type GetSignedUploadUrlFunc, type GetSignedFetchUrlFunc } from "./ImageQueue";
 import { type Id, toast } from "react-toastify";
 import { progress } from "framer-motion";
 
 type Props = {
 	username: string;
 	images: Image[];
-	getSignedUrl: GetSignedUrlFunc;
+    getSignedUploadUrl: GetSignedUploadUrlFunc
+    getSignedFetchUrl: GetSignedFetchUrlFunc
 };
 // TODO: Test revalidate image upload while in progress
 
-export default function Gallery({ username, images, getSignedUrl }: Props) {
+export default function Gallery({ username, images, getSignedUploadUrl, getSignedFetchUrl }: Props) {
+    const [localImages, setLocalImages] = useState(images)
 	const [
 		{ state, inProgressImage, completedImages, queuedImages },
 		{ addImage, resetCompletedImages },
-	] = useImageQueue(username, getSignedUrl);
+	] = useImageQueue(username, getSignedUploadUrl,getSignedFetchUrl , (filename, url) => setLocalImages(imgs => [...imgs, {name: filename,src: url, size: 0}]));
 	const toastId = useRef<Id | null>(null);
 	const onDrop = useCallback(
 		(acceptedFiles: File[]) => {
@@ -76,7 +78,7 @@ export default function Gallery({ username, images, getSignedUrl }: Props) {
 				)}
 			</div>
 			<Grid templateColumns="repeat(4, 1fr)" gap={6}>
-				{images.map((image, index) => (
+				{localImages.map((image) => (
 					<GridItem key={image.name}>
 						<img
 							style={{

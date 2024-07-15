@@ -20,10 +20,16 @@ export default async function GalleryPage({
 	if (!user || user.name !== params.username)
 		throw new Error("Not authenticated!");
 
+
+	const getSignedFetchUrl = async (filename: string) => {
+		"use server";
+		return await getSignedObjectFetchUrl(filename);
+	}
+
 	const files = await listObjects(`${user.name}_photos/`);
 	const images: Image[] = [];
 	for (const file of files) {
-		const url = await getSignedObjectFetchUrl(file.name as string);
+		const url = await getSignedFetchUrl(file.name as string);
 		images.push({
 			etag: file.etag,
 			lastModified: file.lastModified?.toISOString(),
@@ -33,18 +39,20 @@ export default async function GalleryPage({
 		});
 	}
 
-	const getSignedUrl = async (username: string, ratio: string) => {
+
+	const getSignedUploadUrl = async (username: string, ratio: string) => {
 		"use server";
 		const id = ulid();
 		const filename = `${username}_photos/${id}_${ratio}`;
-		return await getSignedObjectUploadUrl(filename);
+		return [filename, await getSignedObjectUploadUrl(filename)];
 	};
 
 	return (
 		<main>
 			<Gallery
 				username={authSession.user.name as string}
-				getSignedUrl={getSignedUrl}
+				getSignedUploadUrl={getSignedUploadUrl}
+				getSignedFetchUrl={getSignedFetchUrl}
 				images={images}
 			/>
 		</main>
