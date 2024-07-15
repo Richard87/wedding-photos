@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from './providers'
 import { Rubik } from 'next/font/google'
+import 'react-toastify/dist/ReactToastify.css';
 
 const rubik = Rubik({
   subsets: ['latin'],
