@@ -2,7 +2,6 @@
 
 import Gallery from "@/components/Gallery";
 import { getServerAuthSession } from "@/server/auth";
-import { revalidatePath } from "next/cache";
 import { ulid } from "ulidx";
 
 import {
@@ -11,6 +10,7 @@ import {
 	listObjects,
 } from "@/server/services/storage";
 import type { Image } from "@/types/image";
+import type { GetSignedUploadUrlFunc } from "@/components/ImageQueue";
 
 export default async function GalleryPage({
 	params,
@@ -40,7 +40,7 @@ export default async function GalleryPage({
 	}
 
 
-	const getSignedUploadUrl = async (username: string, ratio: string) => {
+	const getSignedUploadUrl: GetSignedUploadUrlFunc = async (username, ratio) => {
 		"use server";
 		const id = ulid();
 		const filename = `${username}_photos/${id}_${ratio}`;

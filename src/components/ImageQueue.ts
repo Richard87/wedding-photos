@@ -1,17 +1,14 @@
 "use client";
 
-import { revalidateGallery } from "@/server/actions";
-import { useInterval } from "@chakra-ui/react";
 import { useReducer } from "react";
 import { toast } from "react-toastify";
+import { useInterval } from "./useInterval";
 
 export type GetSignedUploadUrlFunc = (
 	username: string,
 	ratio: string,
 ) => Promise<[string, string]>;
-export type GetSignedFetchUrlFunc = (
-	filename: string,
-) => Promise<string>;
+export type GetSignedFetchUrlFunc = (filename: string) => Promise<string>;
 
 const initState: ImageReducerState = {
 	queuedImages: [],
@@ -38,9 +35,9 @@ type Action = {
 
 export function useImageQueue(
 	username: string,
-    getSignedUploadUrl: GetSignedUploadUrlFunc, 
-    getSignedFetchUrl: GetSignedFetchUrlFunc ,
-    onUploadedImage: (filename:string, url: string) => unknown,
+	getSignedUploadUrl: GetSignedUploadUrlFunc,
+	getSignedFetchUrl: GetSignedFetchUrlFunc,
+	onUploadedImage: (filename: string, url: string) => unknown,
 ): [
 	ImageReducerState,
 	{ addImage: (image: File) => void; resetCompletedImages: () => void },
@@ -83,25 +80,27 @@ export function useImageQueue(
 		}
 	};
 
-	useInterval(() => {
+	useInterval(async () => {
 		if (!state.inProgressImage && state.queuedImages.length > 0) {
-			const image = state.queuedImages[0];
-			uploadingImage(image);
-			getSignedUploadUrl(username, "X")
-				.then(([filename, url]) => {
-                    fetch(url, { body: image, method: "PUT" })
-                    return Promise.resolve(filename)
-                })
-                .then(filename => getSignedFetchUrl(filename).then(url => Promise.resolve([filename, url])))
-				.then(([filename, url]) => {
-					completedImage(image);
-                    onUploadedImage(filename, url)
-				})
-				.catch((e) => {
-					console.error(e);
+			try {
+				const image = state.queuedImages[0];
+				uploadingImage(image);
+				const [filename, uploadUrl] = await getSignedUploadUrl(username, "X");
+				try {
+					await fetch(uploadUrl, { body: image, method: "PUT" });
+				} catch (error) {
+					console.error(error);
 					toast.error("Upload failed, adding image back to queue...");
 					addImage(image);
-				});
+				}
+				const fetchUrl = await getSignedFetchUrl(filename);
+
+				completedImage(image);
+				onUploadedImage(filename, fetchUrl);
+			} catch (error) {
+				console.error(error);
+				toast.error("System failure, please try again");
+			}
 		}
 	}, 100);
 
