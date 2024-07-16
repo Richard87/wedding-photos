@@ -8,7 +8,7 @@ import React, {
 	useRef,
 	useState,
 } from "react";
-import { DropzoneOptions, useDropzone } from "react-dropzone";
+import { type DropzoneOptions, useDropzone } from "react-dropzone";
 import { Box, Center, Container, Grid, GridItem, Text } from "@chakra-ui/react";
 import { revalidateGallery } from "@/server/actions";
 import {
@@ -34,10 +34,7 @@ export default function Gallery({
 	getSignedFetchUrl,
 }: Props) {
 	const [localImages, setLocalImages] = useState(images);
-	const [
-		{ state, inProgressImage, completedImages, queuedImages },
-		{ addImage, resetCompletedImages },
-	] = useImageQueue(
+	const { addImage } = useImageQueue(
 		username,
 		getSignedUploadUrl,
 		getSignedFetchUrl,
@@ -47,49 +44,14 @@ export default function Gallery({
 				{ name: filename, src: url, size: 0 },
 			]),
 	);
-	const toastId = useRef<Id | null>(null);
 	const onDrop = useCallback(
-		(acceptedFiles: File[]) => {
-			acceptedFiles.forEach(addImage);
-			toastId.current = toast("Uploading images...");
-		},
+		(acceptedFiles: File[]) => acceptedFiles.forEach(addImage),
 		[addImage],
 	);
-	const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, noClick: true });
-	const queuedImagesCount = queuedImages.length;
-	useEffect(() => {
-		if (state === "completed" && toastId.current != null) {
-			toast.update(toastId.current, {
-				render: `Compleded uploading ${completedImages} images 🥳🥳`,
-				autoClose: 5000,
-				onClose: resetCompletedImages,
-				closeButton: true,
-				closeOnClick: true,
-				progress: 1,
-			});
-			toastId.current = null;
-		}
-		if (state === "uploading" && toastId.current != null)
-			toast.update(toastId.current, {
-				render: `uploading ${inProgressImage?.name ?? "image"}`,
-				closeButton: false,
-				progress:
-					(completedImages + 1) / (completedImages + queuedImagesCount + 1),
-			});
-		if (state === "working" && toastId.current != null)
-			toast.update(toastId.current, {
-				render: `processing ${inProgressImage?.name ?? "image"}`,
-				closeButton: false,
-				progress:
-					(completedImages + 1) / (completedImages + queuedImagesCount + 1),
-			});
-	}, [
-		inProgressImage,
-		completedImages,
-		queuedImagesCount,
-		state,
-		resetCompletedImages,
-	]);
+	const { getRootProps, getInputProps, isDragActive } = useDropzone({
+		onDrop,
+		noClick: true,
+	});
 
 	return (
 		<Box
@@ -133,9 +95,14 @@ const InnerDropzone = (props: {
 }) => {
 	const { getRootProps, getInputProps, isDragActive } = useDropzone({
 		onDrop: props.onDrop,
+		noClick: false,
 	});
+
 	return (
-		<Box _hover={{textDecoration: "underline", cursor: "pointer"}} {...getRootProps}>
+		<Box
+			_hover={{ textDecoration: "underline", cursor: "pointer" }}
+			{...getRootProps()}
+		>
 			<input {...getInputProps()} />
 			<Center>
 				<Text
@@ -154,15 +121,3 @@ const InnerDropzone = (props: {
 		</Box>
 	);
 };
-
-async function getImageDimensions(file: File) {
-	const img = new Image();
-	img.src = URL.createObjectURL(file);
-	await img.decode();
-	const width = img.width;
-	const height = img.height;
-	return {
-		width,
-		height,
-	};
-}

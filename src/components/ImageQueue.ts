@@ -1,7 +1,7 @@
 "use client";
 
-import { useReducer } from "react";
-import { toast } from "react-toastify";
+import { useCallback, useEffect, useReducer, useRef } from "react";
+import { type Id, toast } from "react-toastify";
 import { useInterval } from "./useInterval";
 
 export type GetSignedUploadUrlFunc = (
@@ -13,13 +13,13 @@ export type GetSignedFetchUrlFunc = (filename: string) => Promise<string>;
 const initState: ImageReducerState = {
 	queuedImages: [],
 	completedImages: 0,
-	state: "idle",
+	status: "idle",
 };
 type ImageReducerState = {
 	queuedImages: File[];
 	inProgressImage?: File | null;
 	completedImages: number;
-	state: "idle" | "uploading" | "completed" | "working";
+	status: "idle" | "uploading" | "completed" | "working";
 };
 
 enum ActionTypes {
@@ -38,10 +38,8 @@ export function useImageQueue(
 	getSignedUploadUrl: GetSignedUploadUrlFunc,
 	getSignedFetchUrl: GetSignedFetchUrlFunc,
 	onUploadedImage: (filename: string, url: string) => unknown,
-): [
-	ImageReducerState,
-	{ addImage: (image: File) => void; resetCompletedImages: () => void },
-] {
+): { addImage: (image: File) => void } {
+	const toastId = useRef<Id | null>(null);
 	const reducer = (
 		state: ImageReducerState,
 		action: Action,
@@ -51,14 +49,14 @@ export function useImageQueue(
 				return {
 					...state,
 					queuedImages: [...state.queuedImages, action.image as File],
-					state: "working",
+					status: "working",
 				};
 			case ActionTypes.UPLOAD_IMAGE:
 				return {
 					...state,
 					queuedImages: state.queuedImages.filter((i) => i !== action.image),
 					inProgressImage: action.image,
-					state: "uploading",
+					status: "uploading",
 				};
 			case ActionTypes.IMAGE_COMPLETED:
 				// if (state.queuedImages.length === 0) revalidateGallery(username);
@@ -67,13 +65,13 @@ export function useImageQueue(
 					...state,
 					completedImages: state.completedImages++,
 					inProgressImage: null,
-					state: state.queuedImages.length === 0 ? "completed" : "working",
+					status: state.queuedImages.length === 0 ? "completed" : "working",
 				};
 			case ActionTypes.RESET_COMPLETED_IMAGES:
 				return {
 					...state,
 					completedImages: 0,
-					state: state.state === "completed" ? "idle" : state.state,
+					status: status === "completed" ? "idle" : state.status,
 				};
 			default:
 				return state;
@@ -106,18 +104,80 @@ export function useImageQueue(
 
 	const [state, dispatch] = useReducer(reducer, initState);
 
-	const command = (action: ActionTypes, payload: File | null): Action => ({
-		type: action,
-		image: payload,
-	});
-	const addImage = (image: File) =>
-		dispatch(command(ActionTypes.ADD_IMAGE, image));
+	const command = useCallback(
+		(action: ActionTypes, payload: File | null): Action => ({
+			type: action,
+			image: payload,
+		}),
+		[],
+	);
+	const addImage = useCallback(
+		(image: File) => {
+			if (toastId.current == null)
+				toastId.current = toast("Uploading images...");
+			dispatch(command(ActionTypes.ADD_IMAGE, image));
+		},
+		[command],
+	);
 	const completedImage = (image: File) =>
 		dispatch(command(ActionTypes.IMAGE_COMPLETED, image));
 	const uploadingImage = (image: File) =>
 		dispatch(command(ActionTypes.UPLOAD_IMAGE, image));
-	const resetCompletedImages = () =>
-		dispatch(command(ActionTypes.RESET_COMPLETED_IMAGES, null));
+	const resetCompletedImages = useCallback(
+		() => dispatch(command(ActionTypes.RESET_COMPLETED_IMAGES, null)),
+		[command],
+	);
 
-	return [state, { addImage, resetCompletedImages }];
+	const status = state.status;
+	const queuedImagesCount = state.queuedImages.length;
+	const completedImages = state.completedImages;
+	const inProgressImage = state.inProgressImage;
+
+	useEffect(() => {
+		if (status === "completed" && toastId.current != null) {
+			toast.update(toastId.current, {
+				render: `Compleded uploading ${completedImages} images 🥳🥳`,
+				autoClose: 5000,
+				onClose: resetCompletedImages,
+				closeButton: true,
+				closeOnClick: true,
+				progress: 1,
+			});
+			toastId.current = null;
+		}
+		if (status === "uploading" && toastId.current != null)
+			toast.update(toastId.current, {
+				render: `uploading ${inProgressImage?.name ?? "image"}`,
+				closeButton: false,
+				progress:
+					(completedImages + 1) / (completedImages + queuedImagesCount + 1),
+			});
+		if (status === "working" && toastId.current != null)
+			toast.update(toastId.current, {
+				render: `processing ${inProgressImage?.name ?? "image"}`,
+				closeButton: false,
+				progress:
+					(completedImages + 1) / (completedImages + queuedImagesCount + 1),
+			});
+	}, [
+		inProgressImage,
+		completedImages,
+		queuedImagesCount,
+		status,
+		resetCompletedImages,
+	]);
+
+	return { addImage };
+}
+
+async function getImageDimensions(file: File) {
+	const img = new Image();
+	img.src = URL.createObjectURL(file);
+	await img.decode();
+	const width = img.width;
+	const height = img.height;
+	return {
+		width,
+		height,
+	};
 }
