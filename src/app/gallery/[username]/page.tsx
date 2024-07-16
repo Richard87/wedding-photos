@@ -18,6 +18,7 @@ export default async function GalleryPage({
 	params,
 }: { params: { username: string } }) {
 	const authSession = await getServerAuthSession();
+	console.log(authSession)
 	const user = authSession?.user;
 	if (!user || user.name !== params.username)
 		throw new Error("Not authenticated!");

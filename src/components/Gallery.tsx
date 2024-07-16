@@ -68,7 +68,7 @@ export default function Gallery({
 					<InnerDropzone isDragActive={isDragActive} onDrop={onDrop} />
 				</Box>
 				<Box mb={3}>
-					<Grid templateColumns="repeat(4, 1fr)" gap={6}>
+					<Grid templateColumns="repeat(auto-fill, minmax(200px, 1fr))" gap={6}>
 						{localImages.map((image) => (
 							<GridItem key={image.name}>
 								<img

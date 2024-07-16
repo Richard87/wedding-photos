@@ -12,7 +12,7 @@ export function Nav(props: { username: string }) {
 						<Heading>Gallery</Heading>
 					</Center>
 					<Center flex={1}>
-						<Text>Welcome to our wedding {props.username}</Text>
+						<Text hideBelow={"sm"}>Welcome to our wedding {props.username}</Text>
 					</Center>
 					<Center>
 						<button type="button" onClick={() => signOut({ callbackUrl: "/" })}>
