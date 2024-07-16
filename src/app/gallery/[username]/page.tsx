@@ -11,6 +11,8 @@ import {
 } from "@/server/services/storage";
 import type { Image } from "@/types/image";
 import type { GetSignedUploadUrlFunc } from "@/components/ImageQueue";
+import { Nav } from "@/components/Nav";
+import { Box, Flex } from "@chakra-ui/react";
 
 export default async function GalleryPage({
 	params,
@@ -48,13 +50,17 @@ export default async function GalleryPage({
 	};
 
 	return (
-		<main>
+		<Flex direction={"column"} height={"100%"}>
+			<Nav username={authSession.user.name as string} />
+			<Box flex={1}>
+				
 			<Gallery
 				username={authSession.user.name as string}
 				getSignedUploadUrl={getSignedUploadUrl}
 				getSignedFetchUrl={getSignedFetchUrl}
 				images={images}
 			/>
-		</main>
+			</Box>
+		</Flex>
 	);
 }

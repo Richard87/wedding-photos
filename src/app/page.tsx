@@ -1,4 +1,3 @@
-"use client";
 import { Login } from "@/components/Login";
 import { getServerAuthSession } from "@/server/auth";
 import { redirect } from "next/navigation";
