@@ -8,7 +8,7 @@ import React, {
 	useRef,
 	useState,
 } from "react";
-import { useDropzone } from "react-dropzone";
+import { DropzoneOptions, useDropzone } from "react-dropzone";
 import { Box, Center, Container, Grid, GridItem, Text } from "@chakra-ui/react";
 import { revalidateGallery } from "@/server/actions";
 import {
@@ -55,7 +55,7 @@ export default function Gallery({
 		},
 		[addImage],
 	);
-	const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
+	const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, noClick: true });
 	const queuedImagesCount = queuedImages.length;
 	useEffect(() => {
 		if (state === "completed" && toastId.current != null) {
@@ -91,34 +91,69 @@ export default function Gallery({
 		resetCompletedImages,
 	]);
 
-	return (<Box {...getRootProps()} minHeight={"100%"} borderStyle={"dashed"} borderColor={isDragActive ? "green.500" : "white"} boxSizing="content-box" borderWidth={5}>
-		<Container>
-			<Box mb={9} pt={3}>
-				<input {...getInputProps()} />
-				<Center><Text visibility={isDragActive ? "visible" : "hidden"}>Drop the files here ...</Text></Center>
-
-				<Center><Text>Please <strong>click here</strong> to upload any images you want to share with us ♡</Text></Center>
-			</Box>
-			<Box mb={3}>
-				<Grid templateColumns="repeat(4, 1fr)" gap={6}>
-					{localImages.map((image) => (
-						<GridItem key={image.name}>
-							<img
-								style={{
-									height: "100%",
-									width: "auto",
-									objectFit: "cover",
-								}}
-								src={image.src}
-								alt="gallery-photo"
-							/>
-						</GridItem>
-					))}
-				</Grid>
-			</Box>
-		</Container></Box>
+	return (
+		<Box
+			{...getRootProps()}
+			minHeight={"100%"}
+			borderStyle={"dashed"}
+			borderColor={isDragActive ? "green.500" : "white"}
+			boxSizing="content-box"
+			borderWidth={5}
+		>
+			<Container>
+				<Box mb={9} pt={3}>
+					<input {...getInputProps()} />
+					<InnerDropzone isDragActive={isDragActive} onDrop={onDrop} />
+				</Box>
+				<Box mb={3}>
+					<Grid templateColumns="repeat(4, 1fr)" gap={6}>
+						{localImages.map((image) => (
+							<GridItem key={image.name}>
+								<img
+									style={{
+										height: "100%",
+										width: "auto",
+										objectFit: "cover",
+									}}
+									src={image.src}
+									alt="gallery-photo"
+								/>
+							</GridItem>
+						))}
+					</Grid>
+				</Box>
+			</Container>
+		</Box>
 	);
 }
+
+const InnerDropzone = (props: {
+	onDrop: DropzoneOptions["onDrop"];
+	isDragActive: boolean;
+}) => {
+	const { getRootProps, getInputProps, isDragActive } = useDropzone({
+		onDrop: props.onDrop,
+	});
+	return (
+		<Box _hover={{textDecoration: "underline", cursor: "pointer"}} {...getRootProps}>
+			<input {...getInputProps()} />
+			<Center>
+				<Text
+					visibility={isDragActive || props.isDragActive ? "visible" : "hidden"}
+				>
+					Drop the files here ...
+				</Text>
+			</Center>
+
+			<Center>
+				<Text>
+					Please <strong>click here</strong> to upload any images you want to
+					share with us ♡
+				</Text>
+			</Center>
+		</Box>
+	);
+};
 
 async function getImageDimensions(file: File) {
 	const img = new Image();
