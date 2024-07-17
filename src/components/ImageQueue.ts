@@ -3,11 +3,15 @@
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import { type Id, toast } from "react-toastify";
 import { useInterval } from "./useInterval";
+import { useLeavePageConfirm } from "./useLeavePageConfirm";
+
+export type FileSizes = "original" | "small" | "blur"
 
 export type GetSignedUploadUrlFunc = (
+	type: string,
 	username: string,
 	ratio: string,
-) => Promise<[string, string]>;
+) => Promise<[Record<FileSizes, string>, Record<FileSizes,string>]>;
 export type GetSignedFetchUrlFunc = (filename: string) => Promise<string>;
 
 const initState: ImageReducerState = {
@@ -71,7 +75,7 @@ export function useImageQueue(
 				return {
 					...state,
 					completedImages: 0,
-					status: status === "completed" ? "idle" : state.status,
+					status: state.status === "completed" ? "idle" : state.status,
 				};
 			default:
 				return state;
@@ -81,20 +85,51 @@ export function useImageQueue(
 	useInterval(async () => {
 		if (!state.inProgressImage && state.queuedImages.length > 0) {
 			try {
+				let ratio = "X";
+				let small: Blob | null = null;
+				let blur: Blob | null = null;
 				const image = state.queuedImages[0];
 				uploadingImage(image);
-				const [filename, uploadUrl] = await getSignedUploadUrl(username, "X");
+
+				if (isImage(image.type)) {
+					const [fsmall, fratio] = await resizeImage(image);
+					ratio = fratio.toFixed(3);
+					small = fsmall;
+
+					const [fblur] = await resizeImage(fsmall,5);
+					blur = fblur;
+				}
+
+                const [filenames, uploadUrls] = await getSignedUploadUrl(
+                    image.type,
+                    username,
+                    ratio,
+                );
+
 				try {
-					await fetch(uploadUrl, { body: image, method: "PUT" });
+                    const url = await uploadImage(image, uploadUrls.original,filenames.original , getSignedFetchUrl)
+                    onUploadedImage(filenames.original, url);
 				} catch (error) {
 					console.error(error);
 					toast.error("Upload failed, adding image back to queue...");
 					addImage(image);
 				}
-				const fetchUrl = await getSignedFetchUrl(filename);
+
+				if (small) {
+                    try {
+                        const url = await uploadImage(small, uploadUrls.small, filenames.small, getSignedFetchUrl)
+                        onUploadedImage(filenames.small, url);
+                    } catch (e) {console.error(e)}
+				}
+
+				if (blur) {
+                    try {
+                        const url = await uploadImage(blur, uploadUrls.blur,  filenames.blur, getSignedFetchUrl)
+                        onUploadedImage(filenames.blur, url);
+                    } catch (e) {console.error(e)}
+				}
 
 				completedImage(image);
-				onUploadedImage(filename, fetchUrl);
 			} catch (error) {
 				console.error(error);
 				toast.error("System failure, please try again");
@@ -103,6 +138,8 @@ export function useImageQueue(
 	}, 100);
 
 	const [state, dispatch] = useReducer(reducer, initState);
+
+    useLeavePageConfirm(state.status !== "idle")
 
 	const command = useCallback(
 		(action: ActionTypes, payload: File | null): Action => ({
@@ -170,14 +207,60 @@ export function useImageQueue(
 	return { addImage };
 }
 
-async function getImageDimensions(file: File) {
-	const img = new Image();
-	img.src = URL.createObjectURL(file);
-	await img.decode();
-	const width = img.width;
-	const height = img.height;
-	return {
+const isImage = (type: string) => {
+	return /image\/.*/.test(type);
+};
+
+const resizeImage = async (
+	file: File|Blob|null,
+	newWidth = 256,
+): Promise<[blob: Blob | null, ratio: number]> => {
+	const canvas = document.createElement("canvas");
+	const ctx = canvas.getContext("2d");
+	if (ctx == null || file == null) return Promise.resolve([null, 1]);
+
+	const bitmap = await createImageBitmap(file);
+	const { width, height } = bitmap;
+	const ratio = width / height;
+
+	const scale = newWidth / width;
+
+	const x = (newWidth - width * scale) / 2;
+	const y = (newWidth - height * scale) / 2;
+
+	canvas.width = width * scale;
+	canvas.height = height * scale;
+	ctx.drawImage(
+		bitmap,
+		0,
+		0,
 		width,
 		height,
-	};
-}
+		0,
+		0,
+		width * scale,
+		height * scale,
+	);
+
+	return new Promise((resolve) => {
+		canvas.toBlob(
+			(blob) => {
+				resolve([blob, ratio]);
+			},
+			"image/webp",
+			1,
+		);
+	});
+};
+
+const uploadImage = async (
+	content: File | Blob,
+    uploadUrl: string,
+    filename: string,
+	getSignedFetchUrl: GetSignedFetchUrlFunc,
+): Promise<string> => {
+	await fetch(uploadUrl, { body: content, method: "PUT" });
+	const fetchUrl = await getSignedFetchUrl(filename);
+
+    return fetchUrl
+};

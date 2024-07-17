@@ -1,4 +1,9 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Kristiya & Richards Wedding Gallery
+
+## TODO:
+- Add extension to files
+- Upload ultrasmall, small, and original image
+- cleanup progress
 
 ## Getting Started
 

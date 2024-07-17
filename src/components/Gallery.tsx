@@ -27,6 +27,10 @@ type Props = {
 };
 // TODO: Test revalidate image upload while in progress
 
+type FileSizeType = Parameters<GetSignedUploadUrlFunc>[1]
+type ParsedImageDescription = {src: string, ratio: string, id: string, size: string, ext: string}
+type ParsedImages = Record<string, {[k in FileSizeType]: ParsedImageDescription}>
+
 export default function Gallery({
 	username,
 	images,
@@ -53,6 +57,26 @@ export default function Gallery({
 		noClick: true,
 	});
 
+	const parsedImages = localImages.reduce<ParsedImages>((curry, item, index) => {
+		const parts = item.name.split(".", -2)
+		const ext = parts.pop()
+		const size: FileSizeType = parts.pop() as FileSizeType
+		const id = parts.shift()
+		const ratio = parts.join(".")
+
+		if (!ext || !size || !id || !ratio) {
+			return curry
+		}
+
+		const desc: ParsedImageDescription = {src: item.src, ratio, size, id, ext}
+		
+		if (curry[id] == null) curry[id] = {[size]: desc}
+		curry[id][size] = desc
+
+		return curry
+	}, {})
+	console.log(parsedImages)
+
 	return (
 		<Box
 			{...getRootProps()}
@@ -69,15 +93,16 @@ export default function Gallery({
 				</Box>
 				<Box mb={3}>
 					<Grid templateColumns="repeat(auto-fill, minmax(200px, 1fr))" gap={6}>
-						{localImages.map((image) => (
-							<GridItem key={image.name}>
+						{Object.entries(parsedImages).map(([id, item]) => (
+							<GridItem key={id}>
 								<img
 									style={{
 										height: "100%",
 										width: "auto",
 										objectFit: "cover",
+										backgroundImage: item.blur?.src ?? undefined
 									}}
-									src={image.src}
+									src={item.small?.src ?? item.original?.src ?? ""} 
 									alt="gallery-photo"
 								/>
 							</GridItem>

@@ -10,9 +10,10 @@ import {
 	listObjects,
 } from "@/server/services/storage";
 import type { Image } from "@/types/image";
-import type { GetSignedUploadUrlFunc } from "@/components/ImageQueue";
+import type { FileSizes, GetSignedUploadUrlFunc } from "@/components/ImageQueue";
 import { Nav } from "@/components/Nav";
 import { Box, Flex } from "@chakra-ui/react";
+import mime from "mime-types"
 
 export default async function GalleryPage({
 	params,
@@ -43,11 +44,23 @@ export default async function GalleryPage({
 	}
 
 
-	const getSignedUploadUrl: GetSignedUploadUrlFunc = async (username, ratio) => {
+	const getSignedUploadUrl: GetSignedUploadUrlFunc = async (type, username, ratio) => {
 		"use server";
+		const extension = mime.extension(type)
 		const id = ulid();
-		const filename = `${username}_photos/${id}_${ratio}`;
-		return [filename, await getSignedObjectUploadUrl(filename)];
+
+		const filenames: Record<FileSizes,string> = {
+			blur: `${username}_photos/${id}.${ratio}.blur.${extension}`,
+			original: `${username}_photos/${id}.${ratio}.original.${extension}`,
+			small: `${username}_photos/${id}.${ratio}.small.${extension}`,
+		}
+		const urls: Record<FileSizes,string> = {
+			blur: await getSignedObjectUploadUrl(filenames.blur),
+			original: await getSignedObjectUploadUrl(filenames.original),
+			small: await getSignedObjectUploadUrl(filenames.small),
+		}
+
+		return [filenames, urls];
 	};
 
 	return (
