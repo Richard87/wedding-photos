@@ -1,16 +1,16 @@
-"use client";
+"use client"
 
-import type { User } from "@/types/user";
-import { signOut } from "next-auth/react";
+import type { User } from "@/types/user"
+import { signOut } from "next-auth/react"
 
 type UserInfoProps = {
-	user: User;
-};
+	user: User
+}
 
 export default function UserInfo({ user }: UserInfoProps) {
 	const handleLogout = async () => {
-		await signOut();
-	};
+		await signOut()
+	}
 
 	return (
 		<div className="rounded-lg border shadow-lg p-10">
@@ -25,5 +25,5 @@ export default function UserInfo({ user }: UserInfoProps) {
 				Log out
 			</button>
 		</div>
-	);
+	)
 }

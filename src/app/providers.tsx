@@ -1,8 +1,8 @@
-"use client";
+"use client"
 
-import { ChakraProvider } from "@chakra-ui/react";
-import { ToastContainer } from "react-toastify";
-import { theme } from "./theme";
+import { ChakraProvider } from "@chakra-ui/react"
+import { ToastContainer } from "react-toastify"
+import { theme } from "./theme"
 
 export function Providers({ children }: { children: React.ReactNode }) {
 	return (
@@ -19,5 +19,5 @@ export function Providers({ children }: { children: React.ReactNode }) {
 				theme="light"
 			/>
 		</ChakraProvider>
-	);
+	)
 }

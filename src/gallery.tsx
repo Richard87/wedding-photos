@@ -87,5 +87,5 @@ export function MasonryGridGallery() {
 				</div>
 			</div>
 		</div>
-	);
+	)
 }

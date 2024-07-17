@@ -1,9 +1,9 @@
-"use client";
+"use client"
 
-import { useCallback, useEffect, useReducer, useRef } from "react";
-import { type Id, toast } from "react-toastify";
-import { useInterval } from "./useInterval";
-import { useLeavePageConfirm } from "./useLeavePageConfirm";
+import { useCallback, useEffect, useReducer, useRef } from "react"
+import { type Id, toast } from "react-toastify"
+import { useInterval } from "./useInterval"
+import { useLeavePageConfirm } from "./useLeavePageConfirm"
 
 export type FileSizes = "original" | "small" | "blur"
 
@@ -11,20 +11,20 @@ export type GetSignedUploadUrlFunc = (
 	type: string,
 	username: string,
 	ratio: string,
-) => Promise<[Record<FileSizes, string>, Record<FileSizes,string>]>;
-export type GetSignedFetchUrlFunc = (filename: string) => Promise<string>;
+) => Promise<[Record<FileSizes, string>, Record<FileSizes, string>]>
+export type GetSignedFetchUrlFunc = (filename: string) => Promise<string>
 
 const initState: ImageReducerState = {
 	queuedImages: [],
 	completedImages: 0,
 	status: "idle",
-};
+}
 type ImageReducerState = {
-	queuedImages: File[];
-	inProgressImage?: File | null;
-	completedImages: number;
-	status: "idle" | "uploading" | "completed" | "working";
-};
+	queuedImages: File[]
+	inProgressImage?: File | null
+	completedImages: number
+	status: "idle" | "uploading" | "completed" | "working"
+}
 
 enum ActionTypes {
 	ADD_IMAGE = "ADD_IMAGE",
@@ -33,9 +33,9 @@ enum ActionTypes {
 	RESET_COMPLETED_IMAGES = "RESET_COMPLETED_IMAGES",
 }
 type Action = {
-	type: ActionTypes;
-	image: File | null;
-};
+	type: ActionTypes
+	image: File | null
+}
 
 export function useImageQueue(
 	username: string,
@@ -43,7 +43,7 @@ export function useImageQueue(
 	getSignedFetchUrl: GetSignedFetchUrlFunc,
 	onUploadedImage: (filename: string, url: string) => unknown,
 ): { addImage: (image: File) => void } {
-	const toastId = useRef<Id | null>(null);
+	const toastId = useRef<Id | null>(null)
 	const reducer = (
 		state: ImageReducerState,
 		action: Action,
@@ -54,14 +54,14 @@ export function useImageQueue(
 					...state,
 					queuedImages: [...state.queuedImages, action.image as File],
 					status: "working",
-				};
+				}
 			case ActionTypes.UPLOAD_IMAGE:
 				return {
 					...state,
 					queuedImages: state.queuedImages.filter((i) => i !== action.image),
 					inProgressImage: action.image,
 					status: "uploading",
-				};
+				}
 			case ActionTypes.IMAGE_COMPLETED:
 				// if (state.queuedImages.length === 0) revalidateGallery(username);
 
@@ -70,76 +70,95 @@ export function useImageQueue(
 					completedImages: state.completedImages++,
 					inProgressImage: null,
 					status: state.queuedImages.length === 0 ? "completed" : "working",
-				};
+				}
 			case ActionTypes.RESET_COMPLETED_IMAGES:
 				return {
 					...state,
 					completedImages: 0,
 					status: state.status === "completed" ? "idle" : state.status,
-				};
+				}
 			default:
-				return state;
+				return state
 		}
-	};
+	}
 
 	useInterval(async () => {
 		if (!state.inProgressImage && state.queuedImages.length > 0) {
 			try {
-				let ratio = "X";
-				let small: Blob | null = null;
-				let blur: Blob | null = null;
-				const image = state.queuedImages[0];
-				uploadingImage(image);
+				let ratio = "X"
+				let small: Blob | null = null
+				let blur: Blob | null = null
+				const image = state.queuedImages[0]
+				uploadingImage(image)
 
 				if (isImage(image.type)) {
-					const [fsmall, fratio] = await resizeImage(image);
-					ratio = fratio.toFixed(3);
-					small = fsmall;
+					const [fsmall, fratio] = await resizeImage(image)
+					ratio = fratio.toFixed(3)
+					small = fsmall
 
-					const [fblur] = await resizeImage(fsmall,5);
-					blur = fblur;
+					const [fblur] = await resizeImage(fsmall, 5)
+					blur = fblur
 				}
 
-                const [filenames, uploadUrls] = await getSignedUploadUrl(
-                    image.type,
-                    username,
-                    ratio,
-                );
+				const [filenames, uploadUrls] = await getSignedUploadUrl(
+					image.type,
+					username,
+					ratio,
+				)
 
 				try {
-                    const url = await uploadImage(image, uploadUrls.original,filenames.original , getSignedFetchUrl)
-                    onUploadedImage(filenames.original, url);
+					const url = await uploadImage(
+						image,
+						uploadUrls.original,
+						filenames.original,
+						getSignedFetchUrl,
+					)
+					onUploadedImage(filenames.original, url)
 				} catch (error) {
-					console.error(error);
-					toast.error("Upload failed, adding image back to queue...");
-					addImage(image);
+					console.error(error)
+					toast.error("Upload failed, adding image back to queue...")
+					addImage(image)
 				}
 
 				if (small) {
-                    try {
-                        const url = await uploadImage(small, uploadUrls.small, filenames.small, getSignedFetchUrl)
-                        onUploadedImage(filenames.small, url);
-                    } catch (e) {console.error(e)}
+					try {
+						const url = await uploadImage(
+							small,
+							uploadUrls.small,
+							filenames.small,
+							getSignedFetchUrl,
+						)
+						onUploadedImage(filenames.small, url)
+					} catch (e) {
+						console.error(e)
+					}
 				}
 
 				if (blur) {
-                    try {
-                        const url = await uploadImage(blur, uploadUrls.blur,  filenames.blur, getSignedFetchUrl)
-                        onUploadedImage(filenames.blur, url);
-                    } catch (e) {console.error(e)}
+					try {
+						const url = await uploadImage(
+							blur,
+							uploadUrls.blur,
+							filenames.blur,
+							getSignedFetchUrl,
+						)
+						onUploadedImage(filenames.blur, url)
+					} catch (e) {
+						console.error(e)
+					}
 				}
 
-				completedImage(image);
+				completedImage(image)
 			} catch (error) {
-				console.error(error);
-				toast.error("System failure, please try again");
+				console.error(error)
+				toast.error("System failure, please try again")
 			}
 		}
-	}, 100);
+	}, 100)
 
-	const [state, dispatch] = useReducer(reducer, initState);
+	const [state, dispatch] = useReducer(reducer, initState)
 
-    useLeavePageConfirm(state.status !== "idle")
+	useLeavePageConfirm(state.status !== "idle")
 
 	const command = useCallback(
 		(action: ActionTypes, payload: File | null): Action => ({
@@ -147,28 +166,28 @@ export function useImageQueue(
 			image: payload,
 		}),
 		[],
-	);
+	)
 	const addImage = useCallback(
 		(image: File) => {
 			if (toastId.current == null)
-				toastId.current = toast("Uploading images...");
-			dispatch(command(ActionTypes.ADD_IMAGE, image));
+				toastId.current = toast("Uploading images...")
+			dispatch(command(ActionTypes.ADD_IMAGE, image))
 		},
 		[command],
-	);
+	)
 	const completedImage = (image: File) =>
-		dispatch(command(ActionTypes.IMAGE_COMPLETED, image));
+		dispatch(command(ActionTypes.IMAGE_COMPLETED, image))
 	const uploadingImage = (image: File) =>
-		dispatch(command(ActionTypes.UPLOAD_IMAGE, image));
+		dispatch(command(ActionTypes.UPLOAD_IMAGE, image))
 	const resetCompletedImages = useCallback(
 		() => dispatch(command(ActionTypes.RESET_COMPLETED_IMAGES, null)),
 		[command],
-	);
+	)
 
-	const status = state.status;
-	const queuedImagesCount = state.queuedImages.length;
-	const completedImages = state.completedImages;
-	const inProgressImage = state.inProgressImage;
+	const status = state.status
+	const queuedImagesCount = state.queuedImages.length
+	const completedImages = state.completedImages
+	const inProgressImage = state.inProgressImage
 
 	useEffect(() => {
 		if (status === "completed" && toastId.current != null) {
@@ -179,8 +198,8 @@ export function useImageQueue(
 				closeButton: true,
 				closeOnClick: true,
 				progress: 1,
-			});
-			toastId.current = null;
+			})
+			toastId.current = null
 		}
 		if (status === "uploading" && toastId.current != null)
 			toast.update(toastId.current, {
@@ -188,48 +207,48 @@ export function useImageQueue(
 				closeButton: false,
 				progress:
 					(completedImages + 1) / (completedImages + queuedImagesCount + 1),
-			});
+			})
 		if (status === "working" && toastId.current != null)
 			toast.update(toastId.current, {
 				render: `processing ${inProgressImage?.name ?? "image"}`,
 				closeButton: false,
 				progress:
 					(completedImages + 1) / (completedImages + queuedImagesCount + 1),
-			});
+			})
 	}, [
 		inProgressImage,
 		completedImages,
 		queuedImagesCount,
 		status,
 		resetCompletedImages,
-	]);
+	])
 
-	return { addImage };
+	return { addImage }
 }
 
 const isImage = (type: string) => {
-	return /image\/.*/.test(type);
-};
+	return /image\/.*/.test(type)
+}
 
 const resizeImage = async (
-	file: File|Blob|null,
+	file: File | Blob | null,
 	newWidth = 256,
 ): Promise<[blob: Blob | null, ratio: number]> => {
-	const canvas = document.createElement("canvas");
-	const ctx = canvas.getContext("2d");
-	if (ctx == null || file == null) return Promise.resolve([null, 1]);
+	const canvas = document.createElement("canvas")
+	const ctx = canvas.getContext("2d")
+	if (ctx == null || file == null) return Promise.resolve([null, 1])
 
-	const bitmap = await createImageBitmap(file);
-	const { width, height } = bitmap;
-	const ratio = width / height;
+	const bitmap = await createImageBitmap(file)
+	const { width, height } = bitmap
+	const ratio = width / height
 
-	const scale = newWidth / width;
+	const scale = newWidth / width
 
-	const x = (newWidth - width * scale) / 2;
-	const y = (newWidth - height * scale) / 2;
+	const x = (newWidth - width * scale) / 2
+	const y = (newWidth - height * scale) / 2
 
-	canvas.width = width * scale;
-	canvas.height = height * scale;
+	canvas.width = width * scale
+	canvas.height = height * scale
 	ctx.drawImage(
 		bitmap,
 		0,
@@ -240,27 +259,27 @@ const resizeImage = async (
 		0,
 		width * scale,
 		height * scale,
-	);
+	)
 
 	return new Promise((resolve) => {
 		canvas.toBlob(
 			(blob) => {
-				resolve([blob, ratio]);
+				resolve([blob, ratio])
 			},
 			"image/webp",
 			1,
-		);
-	});
-};
+		)
+	})
+}
 
 const uploadImage = async (
 	content: File | Blob,
-    uploadUrl: string,
-    filename: string,
+	uploadUrl: string,
+	filename: string,
 	getSignedFetchUrl: GetSignedFetchUrlFunc,
 ): Promise<string> => {
-	await fetch(uploadUrl, { body: content, method: "PUT" });
-	const fetchUrl = await getSignedFetchUrl(filename);
+	await fetch(uploadUrl, { body: content, method: "PUT" })
+	const fetchUrl = await getSignedFetchUrl(filename)
 
-    return fetchUrl
-};
+	return fetchUrl
+}

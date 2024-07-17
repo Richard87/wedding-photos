@@ -1,5 +1,5 @@
-import { Button, Navbar, Typography } from "@material-tailwind/react";
-import React from "react";
+import { Button, Navbar, Typography } from "@material-tailwind/react"
+import React from "react"
 
 export function NavbarDefault() {
 	return (
@@ -59,5 +59,5 @@ export function NavbarDefault() {
 				</div>
 			</div>
 		</Navbar>
-	);
+	)
 }

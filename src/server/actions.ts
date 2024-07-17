@@ -1,6 +1,6 @@
 "use server"
-import { revalidatePath } from "next/cache";
+import { revalidatePath } from "next/cache"
 
 export async function revalidateGallery(username: string) {
-    revalidatePath(`/gallery/${username}`);
+	revalidatePath(`/gallery/${username}`)
 }

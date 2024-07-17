@@ -1,7 +1,7 @@
-"use client";
+"use client"
 
-import { Box, Center, Container, Flex, Heading, Text } from "@chakra-ui/react";
-import { signOut } from "next-auth/react";
+import { Box, Center, Container, Flex, Heading, Text } from "@chakra-ui/react"
+import { signOut } from "next-auth/react"
 
 export function Nav(props: { username: string }) {
 	return (
@@ -12,7 +12,9 @@ export function Nav(props: { username: string }) {
 						<Heading>Gallery</Heading>
 					</Center>
 					<Center flex={1}>
-						<Text hideBelow={"sm"}>Welcome to our wedding {props.username}</Text>
+						<Text hideBelow={"sm"}>
+							Welcome to our wedding {props.username}
+						</Text>
 					</Center>
 					<Center>
 						<button type="button" onClick={() => signOut({ callbackUrl: "/" })}>
@@ -22,5 +24,5 @@ export function Nav(props: { username: string }) {
 				</Flex>
 			</Container>
 		</Box>
-	);
+	)
 }

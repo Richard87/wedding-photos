@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 import {
 	Button,
@@ -8,29 +8,31 @@ import {
 	FormLabel,
 	Input,
 	Text,
-} from "@chakra-ui/react";
-import { signIn } from "next-auth/react";
-import { useSearchParams } from "next/navigation";
-import { type FormEvent, useState } from "react";
+} from "@chakra-ui/react"
+import { signIn } from "next-auth/react"
+import { useSearchParams } from "next/navigation"
+import { type FormEvent, useState } from "react"
 
 export function Login() {
-	const searchParams = useSearchParams();
-	const [username, setUsername] = useState<string>("");
+	const searchParams = useSearchParams()
+	const [username, setUsername] = useState<string>("")
 
 	const handleSubmit = async (event: FormEvent) => {
-		event.preventDefault();
+		event.preventDefault()
 		await signIn("credentials", {
 			username: username.toLowerCase(),
 			callbackUrl: `/gallery/${username.toLowerCase()}`,
-		});
-	};
+		})
+	}
 
 	return (
 		<form className="space-y-6" onSubmit={handleSubmit}>
 			<FormControl>
-				<Center><FormLabel>Your Name</FormLabel></Center>
+				<Center>
+					<FormLabel>Your Name</FormLabel>
+				</Center>
 				<Input
-                    width={"100%"}
+					width={"100%"}
 					type="text"
 					id="username"
 					name="username"
@@ -59,5 +61,5 @@ export function Login() {
 				)}
 			</Center>
 		</form>
-	);
+	)
 }
