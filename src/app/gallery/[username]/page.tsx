@@ -34,10 +34,8 @@ export default async function GalleryPage({
 	for (const file of files) {
 		const url = await getSignedFetchUrl(file.name as string)
 		images.push({
-			etag: file.etag,
-			lastModified: file.lastModified?.toISOString(),
 			name: file.name as string,
-			size: file.size,
+			size: file.size ?? 0,
 			src: url,
 		})
 	}

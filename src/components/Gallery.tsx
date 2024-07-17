@@ -8,6 +8,8 @@ import {
 	type GetSignedUploadUrlFunc,
 	useImageQueue,
 } from "./ImageQueue"
+import Lightbox from "yet-another-react-lightbox"
+import "yet-another-react-lightbox/styles.css"
 
 type Props = {
 	username: string
@@ -54,6 +56,7 @@ export default function Gallery({
 		onDrop,
 		noClick: true,
 	})
+	const [showIndex, setShowIndex] = useState<number | null>(null)
 
 	const parsedImages = localImages.reduce<ParsedImages>(
 		(curry, item, index) => {
@@ -83,6 +86,12 @@ export default function Gallery({
 		{},
 	)
 
+	const slides = Object.entries(parsedImages).map(([id, item]) => ({
+		src: item?.original.src ?? "",
+	}))
+
+	console.log({slides, parsedImages})
+
 	return (
 		<Box
 			{...getRootProps()}
@@ -99,9 +108,10 @@ export default function Gallery({
 				</Box>
 				<Box mb={3}>
 					<Grid templateColumns="repeat(auto-fill, minmax(200px, 1fr))" gap={6}>
-						{Object.entries(parsedImages).map(([id, item]) => (
+						{Object.entries(parsedImages).map(([id, item], index) => (
 							<GridItem key={id}>
 								<img
+									onPointerDown={() => setShowIndex(index)}
 									style={{
 										height: "100%",
 										width: "auto",
@@ -116,6 +126,12 @@ export default function Gallery({
 					</Grid>
 				</Box>
 			</Container>
+			<Lightbox
+				open={showIndex != null}
+				index={showIndex ?? 0}
+				close={() => setShowIndex(null)}
+				slides={slides}
+			/>
 		</Box>
 	)
 }

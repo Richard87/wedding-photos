@@ -31,6 +31,7 @@ enum ActionTypes {
 	UPLOAD_IMAGE = "UPLOAD_IMAGE",
 	IMAGE_COMPLETED = "IMAGE_COMPLETED",
 	RESET_COMPLETED_IMAGES = "RESET_COMPLETED_IMAGES",
+	IMAGE_FAILED = "IMAGE_FAILED",
 }
 type Action = {
 	type: ActionTypes
@@ -71,6 +72,12 @@ export function useImageQueue(
 					inProgressImage: null,
 					status: state.queuedImages.length === 0 ? "completed" : "working",
 				}
+			case ActionTypes.IMAGE_FAILED:
+				return {
+					...state,
+					inProgressImage: null,
+					status: state.queuedImages.length === 0 ? "completed" : "working",
+				}
 			case ActionTypes.RESET_COMPLETED_IMAGES:
 				return {
 					...state,
@@ -84,13 +91,12 @@ export function useImageQueue(
 
 	useInterval(async () => {
 		if (!state.inProgressImage && state.queuedImages.length > 0) {
+			let ratio = "X"
+			let small: Blob | null = null
+			let blur: Blob | null = null
+			const image = state.queuedImages[0]
+			uploadingImage(image)
 			try {
-				let ratio = "X"
-				let small: Blob | null = null
-				let blur: Blob | null = null
-				const image = state.queuedImages[0]
-				uploadingImage(image)
-
 				if (isImage(image.type)) {
 					const [fsmall, fratio] = await resizeImage(image)
 					ratio = fratio.toFixed(3)
@@ -106,19 +112,13 @@ export function useImageQueue(
 					ratio,
 				)
 
-				try {
-					const url = await uploadImage(
-						image,
-						uploadUrls.original,
-						filenames.original,
-						getSignedFetchUrl,
-					)
-					onUploadedImage(filenames.original, url)
-				} catch (error) {
-					console.error(error)
-					toast.error("Upload failed, adding image back to queue...")
-					addImage(image)
-				}
+				const url = await uploadImage(
+					image,
+					uploadUrls.original,
+					filenames.original,
+					getSignedFetchUrl,
+				)
+				onUploadedImage(filenames.original, url)
 
 				if (small) {
 					try {
@@ -151,7 +151,8 @@ export function useImageQueue(
 				completedImage(image)
 			} catch (error) {
 				console.error(error)
-				toast.error("System failure, please try again")
+				toast.error("Upload failed, please try again")
+				failedImage(image)
 			}
 		}
 	}, 100)
@@ -177,6 +178,8 @@ export function useImageQueue(
 	)
 	const completedImage = (image: File) =>
 		dispatch(command(ActionTypes.IMAGE_COMPLETED, image))
+	const failedImage = (image: File) =>
+		dispatch(command(ActionTypes.IMAGE_FAILED, image))
 	const uploadingImage = (image: File) =>
 		dispatch(command(ActionTypes.UPLOAD_IMAGE, image))
 	const resetCompletedImages = useCallback(

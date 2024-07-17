@@ -1,35 +1,60 @@
 "use server"
-import * as Minio from "minio"
 
-const minioClient = new Minio.Client({
-	endPoint: "127.0.0.1",
-	port: 9000,
-	useSSL: false,
-	accessKey: process.env.S3_ACCESS_KEY as string,
-	secretKey: process.env.S3_SECRET_KEY as string,
+import {
+	PutObjectCommand,
+	GetObjectCommand,
+	ListObjectsCommand,
+	S3Client,
+} from "@aws-sdk/client-s3"
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
+
+const S3 = new S3Client({
+	endpoint: process.env.S3_ENDPOINT as string,
+	credentials: {
+		accessKeyId: process.env.S3_ACCESS_KEY as string,
+		secretAccessKey: process.env.S3_SECRET_KEY as string,
+	},
+	region: "auto",
 })
 
-export async function listObjects(path: string): Promise<Minio.BucketItem[]> {
-	return new Promise((resolve, reject) => {
-		const images: Minio.BucketItem[] = []
-		const imagesStream = minioClient.listObjects("wedding", path)
-		imagesStream.on("data", (image) => images.push(image))
-		imagesStream.on("error", (err) => reject(err))
-		imagesStream.on("end", () => resolve(images))
-	})
+export type S3File = {
+	etag?: string
+	name?: string
+	size?: number
 }
 
-export async function getSignedObjectFetchUrl(path: string, ttl = 500) {
-	return await minioClient.presignedGetObject(
-		process.env.S3_BUCKET as string,
-		path,
-		ttl,
+export async function listObjects(path: string): Promise<S3File[]> {
+	const cmd = new ListObjectsCommand({
+		Bucket: process.env.S3_BUCKET as string,
+		Delimiter: "/",
+		Prefix: path,
+	})
+
+	const response = await S3.send(cmd)
+	return (
+		response.Contents?.map((f) => ({
+			etag: f.ETag,
+			name: f.Key,
+			size: f.Size,
+		})) ?? []
 	)
 }
-export async function getSignedObjectUploadUrl(path: string, ttl = 500) {
-	return await minioClient.presignedPutObject(
-		process.env.S3_BUCKET as string,
-		path,
-		ttl,
+
+export async function getSignedObjectFetchUrl(path: string) {
+	return await getSignedUrl(
+		S3,
+		new GetObjectCommand({ Bucket: process.env.S3_BUCKET, Key: path }),
+		{
+			expiresIn: 3600, // 1 Hour
+		},
+	)
+}
+export async function getSignedObjectUploadUrl(path: string) {
+	return await getSignedUrl(
+		S3,
+		new PutObjectCommand({ Bucket: process.env.S3_BUCKET, Key: path }),
+		{
+			expiresIn: 3600, // 1 Hour
+		},
 	)
 }
