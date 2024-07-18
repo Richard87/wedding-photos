@@ -13,15 +13,18 @@ import { signIn } from "next-auth/react"
 import { useSearchParams } from "next/navigation"
 import { type FormEvent, useState } from "react"
 
+const validRegex = /[\W_]/g
+
 export function Login() {
 	const searchParams = useSearchParams()
 	const [username, setUsername] = useState<string>("")
 
 	const handleSubmit = async (event: FormEvent) => {
 		event.preventDefault()
+		const cleaned = username.toLowerCase().trim().replace(validRegex, "-");
 		await signIn("credentials", {
-			username: username.toLowerCase(),
-			callbackUrl: `/gallery/${username.toLowerCase()}`,
+			username: cleaned,
+			callbackUrl: `/gallery/${cleaned}`,
 		})
 	}
 
