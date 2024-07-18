@@ -1,6 +1,15 @@
 "use client"
 import type { Image as ImageType } from "@/types/image"
-import { Box, Center, Container, Grid, GridItem, Text, Image } from "@chakra-ui/react"
+import {
+	Box,
+	Center,
+	Container,
+	Grid,
+	GridItem,
+	Text,
+	Image,
+	Button,
+} from "@chakra-ui/react"
 import React, { useCallback, useState } from "react"
 import { type DropzoneOptions, useDropzone } from "react-dropzone"
 import {
@@ -109,11 +118,11 @@ export default function Gallery({
 						{Object.entries(parsedImages).map(([id, item], index) => (
 							<GridItem key={id}>
 								<Image
-									_hover={{cursor: "pointer"}}
+									_hover={{ cursor: "pointer" }}
 									width={"100%"}
 									height={"100%"}
 									fallbackSrc={item.blur?.src}
-									onPointerDown={() => setShowIndex(index)}
+									onClick={() => setShowIndex(index)}
 									objectFit={"cover"}
 									borderRadius={5}
 									src={item.small?.src ?? item.original?.src ?? ""}
@@ -138,16 +147,13 @@ const InnerDropzone = (props: {
 	onDrop: DropzoneOptions["onDrop"]
 	isDragActive: boolean
 }) => {
-	const { getRootProps, getInputProps, isDragActive } = useDropzone({
+	const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
 		onDrop: props.onDrop,
 		noClick: false,
 	})
 
 	return (
-		<Box
-			_hover={{ textDecoration: "underline", cursor: "pointer" }}
-			{...getRootProps()}
-		>
+		<Box {...getRootProps()}>
 			<input {...getInputProps()} />
 			<Center>
 				<Text
@@ -158,10 +164,11 @@ const InnerDropzone = (props: {
 			</Center>
 
 			<Center>
-				<Text>
-					Please <strong>click here</strong> to upload any images you want to
-					share with us ♡
-				</Text>
+				<Text>Please upload all images you want to share with us ♡</Text>
+			</Center>
+
+			<Center mt={3}>
+				<Button onClick={open}>Select files</Button>
 			</Center>
 		</Box>
 	)
