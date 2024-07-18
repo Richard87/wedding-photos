@@ -150,7 +150,9 @@ export function useImageQueue(
 				completedImage(image)
 			} catch (error) {
 				console.error(error)
-				toast({ title: "Upload failed, please try again", status: "error" })
+				// @ts-expect-error error is unknown
+				const message = (error?.message) ?? error
+				toast({ title: "Upload failed, please try again", status: "error", description: message })
 				failedImage(image)
 			}
 		}
