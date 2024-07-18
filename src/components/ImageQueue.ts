@@ -1,9 +1,9 @@
 "use client"
 
 import { useCallback, useEffect, useReducer, useRef } from "react"
-import { type Id, toast } from "react-toastify"
 import { useInterval } from "./useInterval"
 import { useLeavePageConfirm } from "./useLeavePageConfirm"
+import { type ToastId, useToast } from "@chakra-ui/react"
 
 export type FileSizes = "original" | "small" | "blur"
 
@@ -44,7 +44,8 @@ export function useImageQueue(
 	getSignedFetchUrl: GetSignedFetchUrlFunc,
 	onUploadedImage: (filename: string, url: string) => unknown,
 ): { addImage: (image: File) => void } {
-	const toastId = useRef<Id | null>(null)
+	const toastId = useRef<ToastId | null>(null)
+	const toast = useToast()
 	const reducer = (
 		state: ImageReducerState,
 		action: Action,
@@ -64,8 +65,6 @@ export function useImageQueue(
 					status: "uploading",
 				}
 			case ActionTypes.IMAGE_COMPLETED:
-				// if (state.queuedImages.length === 0) revalidateGallery(username);
-
 				return {
 					...state,
 					completedImages: state.completedImages++,
@@ -76,7 +75,7 @@ export function useImageQueue(
 				return {
 					...state,
 					inProgressImage: null,
-					status: state.queuedImages.length === 0 ? "completed" : "working",
+					status: state.queuedImages.length === 0 ? "idle" : "working",
 				}
 			case ActionTypes.RESET_COMPLETED_IMAGES:
 				return {
@@ -151,7 +150,7 @@ export function useImageQueue(
 				completedImage(image)
 			} catch (error) {
 				console.error(error)
-				toast.error("Upload failed, please try again")
+				toast({ title: "Upload failed, please try again", status: "error" })
 				failedImage(image)
 			}
 		}
@@ -171,10 +170,13 @@ export function useImageQueue(
 	const addImage = useCallback(
 		(image: File) => {
 			if (toastId.current == null)
-				toastId.current = toast("Uploading images...")
+				toastId.current = toast({
+					title: "Uploading images...",
+					status: "info",
+				})
 			dispatch(command(ActionTypes.ADD_IMAGE, image))
 		},
-		[command],
+		[command, toast],
 	)
 	const completedImage = (image: File) =>
 		dispatch(command(ActionTypes.IMAGE_COMPLETED, image))
@@ -195,35 +197,32 @@ export function useImageQueue(
 	useEffect(() => {
 		if (status === "completed" && toastId.current != null) {
 			toast.update(toastId.current, {
-				render: `Compleded uploading ${completedImages} images 🥳🥳`,
-				autoClose: 5000,
-				onClose: resetCompletedImages,
-				closeButton: true,
-				closeOnClick: true,
-				progress: 1,
+				title: `Compleded uploading ${completedImages} images 🥳`,
+				onCloseComplete: resetCompletedImages,
+				isClosable: true,
+				duration: 5000,
 			})
 			toastId.current = null
 		}
 		if (status === "uploading" && toastId.current != null)
 			toast.update(toastId.current, {
-				render: `uploading ${inProgressImage?.name ?? "image"}`,
-				closeButton: false,
-				progress:
-					(completedImages + 1) / (completedImages + queuedImagesCount + 1),
+				title: `uploading ${inProgressImage?.name ?? "image"}`,
+				isClosable: false,
+				// progress: (completedImages + 1) / (completedImages + queuedImagesCount + 1),
 			})
 		if (status === "working" && toastId.current != null)
 			toast.update(toastId.current, {
-				render: `processing ${inProgressImage?.name ?? "image"}`,
-				closeButton: false,
-				progress:
-					(completedImages + 1) / (completedImages + queuedImagesCount + 1),
+				title: `processing ${inProgressImage?.name ?? "image"}`,
+				isClosable: false,
+				// progress: (completedImages + 1) / (completedImages + queuedImagesCount + 1),
 			})
 	}, [
 		inProgressImage,
 		completedImages,
-		queuedImagesCount,
+		// queuedImagesCount,
 		status,
 		resetCompletedImages,
+		toast,
 	])
 
 	return { addImage }

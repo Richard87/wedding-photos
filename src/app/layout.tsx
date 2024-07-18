@@ -1,7 +1,6 @@
 import type { Metadata } from "next"
 import "./globals.css"
 import { Providers } from "./providers"
-import "react-toastify/dist/ReactToastify.css"
 import { fonts } from "@/components/fonts"
 
 export const metadata: Metadata = {
