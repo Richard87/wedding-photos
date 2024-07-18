@@ -1,6 +1,6 @@
 "use client"
-import type { Image } from "@/types/image"
-import { Box, Center, Container, Grid, GridItem, Text } from "@chakra-ui/react"
+import type { Image as ImageType } from "@/types/image"
+import { Box, Center, Container, Grid, GridItem, Text, Image } from "@chakra-ui/react"
 import React, { useCallback, useState } from "react"
 import { type DropzoneOptions, useDropzone } from "react-dropzone"
 import {
@@ -13,7 +13,7 @@ import "yet-another-react-lightbox/styles.css"
 
 type Props = {
 	username: string
-	images: Image[]
+	images: ImageType[]
 	getSignedUploadUrl: GetSignedUploadUrlFunc
 	getSignedFetchUrl: GetSignedFetchUrlFunc
 }
@@ -86,11 +86,9 @@ export default function Gallery({
 		{},
 	)
 
-	const slides = Object.entries(parsedImages).map(([id, item]) => ({
+	const slides = Object.entries(parsedImages).map(([, item]) => ({
 		src: item?.original.src ?? "",
 	}))
-
-	console.log({slides, parsedImages})
 
 	return (
 		<Box
@@ -107,17 +105,17 @@ export default function Gallery({
 					<InnerDropzone isDragActive={isDragActive} onDrop={onDrop} />
 				</Box>
 				<Box mb={3}>
-					<Grid templateColumns="repeat(auto-fill, minmax(200px, 1fr))" gap={6}>
+					<Grid templateColumns="repeat(auto-fill, minmax(160px, 1fr))" gap={6}>
 						{Object.entries(parsedImages).map(([id, item], index) => (
 							<GridItem key={id}>
-								<img
+								<Image
+									_hover={{cursor: "pointer"}}
+									width={"100%"}
+									height={"auto"}
+									fallbackSrc={item.blur?.src}
 									onPointerDown={() => setShowIndex(index)}
-									style={{
-										height: "100%",
-										width: "auto",
-										objectFit: "cover",
-										backgroundImage: item.blur?.src ?? undefined,
-									}}
+									objectFit={"cover"}
+									borderRadius={5}
 									src={item.small?.src ?? item.original?.src ?? ""}
 									alt="gallery-photo"
 								/>

@@ -97,12 +97,16 @@ export function useImageQueue(
 			uploadingImage(image)
 			try {
 				if (isImage(image.type)) {
-					const [fsmall, fratio] = await resizeImage(image)
-					ratio = fratio.toFixed(3)
-					small = fsmall
+					try {
+						const [fsmall, fratio] = await resizeImage(image)
+						ratio = fratio.toFixed(3)
+						small = fsmall
 
-					const [fblur] = await resizeImage(fsmall, 5)
-					blur = fblur
+						const [fblur] = await resizeImage(fsmall, 5)
+						blur = fblur
+					} catch (error) {
+						console.error(error)
+					}
 				}
 
 				const [filenames, uploadUrls] = await getSignedUploadUrl(
@@ -151,8 +155,12 @@ export function useImageQueue(
 			} catch (error) {
 				console.error(error)
 				// @ts-expect-error error is unknown
-				const message = (error?.message) ?? error
-				toast({ title: "Upload failed, please try again", status: "error", description: message })
+				const message = error?.message ?? error
+				toast({
+					title: "Upload failed, please try again",
+					status: "error",
+					description: message,
+				})
 				failedImage(image)
 			}
 		}

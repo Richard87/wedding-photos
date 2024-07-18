@@ -20,10 +20,10 @@ export default async function LoginPage() {
 			height={"100%"}
 		>
 			<Heading size={"md"}>
-				Welcome to Kistiya & Richars Wedding Gallery
+				Welcome to Kristiya & Richards Wedding Gallery
 			</Heading>
 			<Text>
-				Please upload any images or vidoes you take that you want to share
+				Please upload any images or videos you take that you want to share
 			</Text>
 
 			<Box m={9} />
