@@ -244,7 +244,7 @@ const isImage = (type: string) => {
 
 const resizeImage = async (
 	file: File | Blob | null,
-	newWidth = 256,
+	newWidth = 512,
 ): Promise<[blob: Blob | null, ratio: number]> => {
 	const canvas = document.createElement("canvas")
 	const ctx = canvas.getContext("2d")

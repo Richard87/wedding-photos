@@ -111,7 +111,7 @@ export default function Gallery({
 								<Image
 									_hover={{cursor: "pointer"}}
 									width={"100%"}
-									height={"auto"}
+									height={"100%"}
 									fallbackSrc={item.blur?.src}
 									onPointerDown={() => setShowIndex(index)}
 									objectFit={"cover"}
