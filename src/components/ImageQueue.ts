@@ -28,10 +28,10 @@ type ImageReducerState = {
 
 enum ActionTypes {
 	ADD_IMAGE = "ADD_IMAGE",
-	UPLOAD_IMAGE = "UPLOAD_IMAGE",
-	IMAGE_COMPLETED = "IMAGE_COMPLETED",
+	UPLOADING = "UPLOAD_IMAGE",
+	COMPLETED = "IMAGE_COMPLETED",
 	RESET_COMPLETED_IMAGES = "RESET_COMPLETED_IMAGES",
-	IMAGE_FAILED = "IMAGE_FAILED",
+	FAILED = "IMAGE_FAILED",
 }
 type Action = {
 	type: ActionTypes
@@ -57,21 +57,21 @@ export function useImageQueue(
 					queuedImages: [...state.queuedImages, action.image as File],
 					status: "working",
 				}
-			case ActionTypes.UPLOAD_IMAGE:
+			case ActionTypes.UPLOADING:
 				return {
 					...state,
 					queuedImages: state.queuedImages.filter((i) => i !== action.image),
 					inProgressImage: action.image,
 					status: "uploading",
 				}
-			case ActionTypes.IMAGE_COMPLETED:
+			case ActionTypes.COMPLETED:
 				return {
 					...state,
 					completedImages: state.completedImages++,
 					inProgressImage: null,
 					status: state.queuedImages.length === 0 ? "completed" : "working",
 				}
-			case ActionTypes.IMAGE_FAILED:
+			case ActionTypes.FAILED:
 				return {
 					...state,
 					inProgressImage: null,
@@ -88,82 +88,89 @@ export function useImageQueue(
 		}
 	}
 
-	useInterval(async () => {
-		if (!state.inProgressImage && state.queuedImages.length > 0) {
+	const processImage = async (image: File) => {
+		try {
 			let ratio = "X"
 			let small: Blob | null = null
 			let blur: Blob | null = null
-			const image = state.queuedImages[0]
-			uploadingImage(image)
-			try {
-				if (isImage(image.type)) {
-					try {
-						const [fsmall, fratio] = await resizeImage(image)
-						ratio = fratio.toFixed(3)
-						small = fsmall
+			uploading(image)
 
-						const [fblur] = await resizeImage(fsmall, 5)
-						blur = fblur
-					} catch (error) {
-						console.error(error)
-					}
+			if (isImage(image.type)) {
+				try {
+					const [fsmall, fratio] = await resizeImage(image)
+					ratio = fratio.toFixed(3)
+					small = fsmall
+
+					const [fblur] = await resizeImage(fsmall, 5)
+					blur = fblur
+				} catch (error) {
+					console.error(error)
 				}
-
-				const [filenames, uploadUrls] = await getSignedUploadUrl(
-					image.type,
-					username,
-					ratio,
-				)
-
-				const url = await uploadImage(
-					image,
-					uploadUrls.original,
-					filenames.original,
-					getSignedFetchUrl,
-				)
-				onUploadedImage(filenames.original, url)
-
-				if (small) {
-					try {
-						const url = await uploadImage(
-							small,
-							uploadUrls.small,
-							filenames.small,
-							getSignedFetchUrl,
-						)
-						onUploadedImage(filenames.small, url)
-					} catch (e) {
-						console.error(e)
-					}
-				}
-
-				if (blur) {
-					try {
-						const url = await uploadImage(
-							blur,
-							uploadUrls.blur,
-							filenames.blur,
-							getSignedFetchUrl,
-						)
-						onUploadedImage(filenames.blur, url)
-					} catch (e) {
-						console.error(e)
-					}
-				}
-
-				completedImage(image)
-			} catch (error) {
-				console.error(error)
-				// @ts-expect-error error is unknown
-				const message = error?.message ?? error
-				toast({
-					title: "Upload failed, please try again",
-					status: "error",
-					description: message,
-				})
-				failedImage(image)
 			}
+
+			const [filenames, uploadUrls] = await getSignedUploadUrl(
+				image.type,
+				username,
+				ratio,
+			)
+
+			const url = await uploadImage(
+				image,
+				uploadUrls.original,
+				filenames.original,
+				getSignedFetchUrl,
+			)
+			onUploadedImage(filenames.original, url)
+
+			if (small) {
+				try {
+					const url = await uploadImage(
+						small,
+						uploadUrls.small,
+						filenames.small,
+						getSignedFetchUrl,
+					)
+					onUploadedImage(filenames.small, url)
+				} catch (e) {
+					console.error(e)
+				}
+			}
+
+			if (blur) {
+				try {
+					const url = await uploadImage(
+						blur,
+						uploadUrls.blur,
+						filenames.blur,
+						getSignedFetchUrl,
+					)
+					onUploadedImage(filenames.blur, url)
+				} catch (e) {
+					console.error(e)
+				}
+			}
+		} catch (e) {
+			failed(image)
+			throw e
+		} finally {
+			completed(image)
 		}
+	}
+
+	useInterval(() => {
+		if (state.inProgressImage || state.queuedImages.length === 0) return
+
+		const image = state.queuedImages[0]
+		const progress = `${state.completedImages + 1} / ${state.queuedImages.length + state.completedImages}`
+		toast.promise(processImage(image), {
+			success: { title: `${progress}: ${image.name} uploaded 🥳`, duration: 1000 },
+			error: (e) => ({
+				title: `${progress}: Failed to upload ${image.name}`,
+				description: `Error: ${e.message ?? e}`,
+				duration: 1000
+			}),
+			loading: { title: `${progress}: Uploading ${image.name}...`, duration: 1000 },
+		})
 	}, 100)
 
 	const [state, dispatch] = useReducer(reducer, initState)
@@ -178,62 +185,12 @@ export function useImageQueue(
 		[],
 	)
 	const addImage = useCallback(
-		(image: File) => {
-			if (toastId.current == null)
-				toastId.current = toast({
-					title: "Uploading images...",
-					status: "info",
-				})
-			dispatch(command(ActionTypes.ADD_IMAGE, image))
-		},
-		[command, toast],
-	)
-	const completedImage = (image: File) =>
-		dispatch(command(ActionTypes.IMAGE_COMPLETED, image))
-	const failedImage = (image: File) =>
-		dispatch(command(ActionTypes.IMAGE_FAILED, image))
-	const uploadingImage = (image: File) =>
-		dispatch(command(ActionTypes.UPLOAD_IMAGE, image))
-	const resetCompletedImages = useCallback(
-		() => dispatch(command(ActionTypes.RESET_COMPLETED_IMAGES, null)),
+		(image: File) => dispatch(command(ActionTypes.ADD_IMAGE, image)),
 		[command],
 	)
-
-	const status = state.status
-	const queuedImagesCount = state.queuedImages.length
-	const completedImages = state.completedImages
-	const inProgressImage = state.inProgressImage
-
-	useEffect(() => {
-		if (status === "completed" && toastId.current != null) {
-			toast.update(toastId.current, {
-				title: `Compleded uploading ${completedImages} images 🥳`,
-				onCloseComplete: resetCompletedImages,
-				isClosable: true,
-				duration: 5000,
-			})
-			toastId.current = null
-		}
-		if (status === "uploading" && toastId.current != null)
-			toast.update(toastId.current, {
-				title: `uploading ${inProgressImage?.name ?? "image"}`,
-				isClosable: false,
-				// progress: (completedImages + 1) / (completedImages + queuedImagesCount + 1),
-			})
-		if (status === "working" && toastId.current != null)
-			toast.update(toastId.current, {
-				title: `processing ${inProgressImage?.name ?? "image"}`,
-				isClosable: false,
-				// progress: (completedImages + 1) / (completedImages + queuedImagesCount + 1),
-			})
-	}, [
-		inProgressImage,
-		completedImages,
-		// queuedImagesCount,
-		status,
-		resetCompletedImages,
-		toast,
-	])
+	const completed = (i: File) => dispatch(command(ActionTypes.COMPLETED, i))
+	const failed = (i: File) => dispatch(command(ActionTypes.FAILED, i))
+	const uploading = (i: File) => dispatch(command(ActionTypes.UPLOADING, i))
 
 	return { addImage }
 }
