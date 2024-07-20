@@ -147,9 +147,8 @@ const InnerDropzone = (props: {
 	onDrop: DropzoneOptions["onDrop"]
 	isDragActive: boolean
 }) => {
-	const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
+	const { getRootProps, getInputProps, isDragActive } = useDropzone({
 		onDrop: props.onDrop,
-		noClick: false,
 	})
 
 	return (
@@ -167,8 +166,8 @@ const InnerDropzone = (props: {
 				<Text>Please upload all images you want to share with us ♡</Text>
 			</Center>
 
-			<Center mt={3}>
-				<Button onClick={open}>Select files</Button>
+			<Center mt={3} onClick={() => void 0}>
+				<Button>Select files</Button>
 			</Center>
 		</Box>
 	)
