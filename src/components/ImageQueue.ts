@@ -4,8 +4,9 @@ import { useCallback, useEffect, useReducer, useRef } from "react"
 import { useInterval } from "./useInterval"
 import { useLeavePageConfirm } from "./useLeavePageConfirm"
 import { type ToastId, useToast } from "@chakra-ui/react"
+import dynamic from "next/dynamic"
 
-export type FileSizes = "original" | "small" | "blur"
+export type FileSizes = "original" | "small" | "blur" | "heic"
 
 export type GetSignedUploadUrlFunc = (
 	type: string,
@@ -93,11 +94,20 @@ export function useImageQueue(
 			let ratio = "X"
 			let small: Blob | null = null
 			let blur: Blob | null = null
+			let heic: Blob | null = null
+			let wipImage: File | Blob = image
+
 			uploading(image)
+
+			if (isImageHeic(image.type)) {
+				heic = image
+				const heic2any = (await import("heic2any")).default
+				wipImage = await heic2any({ blob: image, toType: "image/jpeg" }) as Blob
+			}
 
 			if (isImage(image.type)) {
 				try {
-					const [fsmall, fratio] = await resizeImage(image)
+					const [fsmall, fratio] = await resizeImage(wipImage)
 					ratio = fratio.toFixed(3)
 					small = fsmall
 
@@ -114,8 +124,17 @@ export function useImageQueue(
 				ratio,
 			)
 
+			if (heic) {
+				await uploadImage(
+					heic,
+					uploadUrls.heic,
+					filenames.heic,
+					getSignedFetchUrl,
+				)
+			}
+
 			const url = await uploadImage(
-				image,
+				wipImage,
 				uploadUrls.original,
 				filenames.original,
 				getSignedFetchUrl,
@@ -199,6 +218,10 @@ const isImage = (type: string) => {
 	return /image\/.*/.test(type)
 }
 
+const isImageHeic = (type: string) => {
+	return type === "image/heic" || type === "image/heif"
+}
+
 const resizeImage = async (
 	file: File | Blob | null,
 	newWidth = 512,
@@ -235,7 +258,7 @@ const resizeImage = async (
 			(blob) => {
 				resolve([blob, ratio])
 			},
-			"image/webp",
+			"image/jpeg",
 			1,
 		)
 	})

@@ -46,18 +46,24 @@ export default async function GalleryPage({
 		ratio,
 	) => {
 		"use server"
-		const extension = mime.extension(type)
+		let extension = mime.extension(type)
 		const id = ulid()
 
+		if (extension === "heic" || extension === "heif") {
+			extension = "jpeg"
+		}
+
 		const filenames: Record<FileSizes, string> = {
-			blur: `${username}_photos/${id}.${ratio}.blur.${extension}`,
+			blur: `${username}_photos/${id}.${ratio}.blur.jpeg`,
 			original: `${username}_photos/${id}.${ratio}.original.${extension}`,
-			small: `${username}_photos/${id}.${ratio}.small.${extension}`,
+			small: `${username}_photos/${id}.${ratio}.small.jpeg`,
+			heic: `${username}_photos/${id}.${ratio}.heic.heic`,
 		}
 		const urls: Record<FileSizes, string> = {
 			blur: await getSignedObjectUploadUrl(filenames.blur),
 			original: await getSignedObjectUploadUrl(filenames.original),
 			small: await getSignedObjectUploadUrl(filenames.small),
+			heic: await getSignedObjectUploadUrl(filenames.heic),
 		}
 
 		return [filenames, urls]
