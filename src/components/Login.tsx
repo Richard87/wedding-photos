@@ -33,7 +33,7 @@ export function Login() {
 	}
 
 	return (
-			<Flex flex={1} direction={"column"} onSubmit={handleSubmit} as={"form"} justifyContent={"space-between"}>
+			<Flex flex={1} direction={"column"} onSubmit={handleSubmit} as={"form"} gap={9}>
 				<FormControl>
 					<FormLabel>Your Name</FormLabel>
 					<Input
@@ -52,7 +52,7 @@ export function Login() {
 						Please use the english alphabet, without spaces, min 4 letters
 					</FormHelperText>
 				</FormControl>
-				<FormControl style={{ marginTop: "30px" }}>
+				<FormControl>
 					<FormLabel>Pin (optional)</FormLabel>
 					<Input
 						width={"100%"}
