@@ -26,6 +26,7 @@ export default async function LoginPage() {
 				<Text>
 					Please upload any images or videos you want to share with us
 				</Text>
+				<Text>กรุณาเพิ่มรูปภาพหรือวิดีโอที่คุณต้องการแบ่งปันให้กับเรา</Text>
 			</Flex>
 
 			<Login />

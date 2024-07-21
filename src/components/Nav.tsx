@@ -9,7 +9,7 @@ export function Nav(props: { username: string }) {
 			<Container>
 				<Flex padding={3} alignItems={"center"}>
 					<Center>
-						<Heading>Gallery</Heading>
+						<Heading>K ♡ R </Heading>
 					</Center>
 					<Center flex={1}>
 						<Text hideBelow={"sm"}>

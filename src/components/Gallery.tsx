@@ -162,12 +162,14 @@ const InnerDropzone = (props: {
 				</Text>
 			</Center>
 
-			<Center>
-				<Text>Please upload all images you want to share with us ♡</Text>
+			<Center flexDirection={"column"}>
+				<Text>Please upload all images you want to share with us</Text>
+				<Text>กรุณาอัปโหลดภาพที่คุณต้องการแบ่งปันกับเรา</Text>
+				<Text>♡</Text>
 			</Center>
 
 			<Center mt={3} onClick={() => void 0}>
-				<Button colorScheme='teal'>Select files</Button>
+				<Button colorScheme='teal'>Select files / เลือกไฟล์</Button>
 			</Center>
 		</Box>
 	)
