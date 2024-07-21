@@ -167,7 +167,7 @@ const InnerDropzone = (props: {
 			</Center>
 
 			<Center mt={3} onClick={() => void 0}>
-				<Button>Select files</Button>
+				<Button colorScheme='teal'>Select files</Button>
 			</Center>
 		</Box>
 	)

@@ -23,7 +23,7 @@ export default function ErrorPage({
 	return (
 		<Box>
 			<Heading>Something went wrong!</Heading>
-			<Button onClick={onClick}>Try again</Button>
+			<Button colorScheme='teal' onClick={onClick}>Try again</Button>
 		</Box>
 	)
 }

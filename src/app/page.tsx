@@ -15,18 +15,19 @@ export default async function LoginPage() {
 		<Container
 			display={"flex"}
 			alignItems={"center"}
-			justifyContent={"center"}
+			justifyContent={"space-around"}
 			flexDirection={"column"}
 			height={"100%"}
 		>
-			<Heading size={"md"}>
-				Welcome to Kristiya & Richards Wedding Gallery
-			</Heading>
-			<Text>
-				Please upload any images or videos you take that you want to share
-			</Text>
+			<Flex flex={0.5} justifyContent={"center"} direction={"column"}>
+				<Heading size={"md"}>
+					Welcome to Kristiya & Richards Wedding Gallery
+				</Heading>
+				<Text>
+					Please upload any images or videos you take that you want to share
+				</Text>
+			</Flex>
 
-			<Box m={9} />
 			<Login />
 		</Container>
 	)
