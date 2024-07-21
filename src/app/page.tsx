@@ -24,7 +24,7 @@ export default async function LoginPage() {
 					Welcome to Kristiya & Richards Wedding Gallery
 				</Heading>
 				<Text>
-					Please upload any images or videos you take that you want to share
+					Please upload any images or videos you want to share with us
 				</Text>
 			</Flex>
 
