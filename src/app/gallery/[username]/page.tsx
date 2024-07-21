@@ -3,6 +3,7 @@
 import Gallery from "@/components/Gallery"
 import { getServerAuthSession } from "@/server/auth"
 import { ulid } from "ulidx"
+import {createHash} from "node:crypto"
 
 import type { FileSizes, GetSignedUploadUrlFunc } from "@/components/ImageQueue"
 import { Nav } from "@/components/Nav"
@@ -14,6 +15,7 @@ import {
 import type { Image } from "@/types/image"
 import { Box, Flex } from "@chakra-ui/react"
 import mime from "mime-types"
+import type { User } from "@/types/user"
 
 export default async function GalleryPage({
 	params,
@@ -29,7 +31,8 @@ export default async function GalleryPage({
 		return await getSignedObjectFetchUrl(filename)
 	}
 
-	const files = await listObjects(`${user.name}_photos/`)
+	console.log(user)
+	const files = await listObjects(await getPrefix(user))
 	const images: Image[] = []
 	for (const file of files) {
 		const url = await getSignedFetchUrl(file.name as string)
@@ -42,7 +45,6 @@ export default async function GalleryPage({
 
 	const getSignedUploadUrl: GetSignedUploadUrlFunc = async (
 		type,
-		username,
 		ratio,
 	) => {
 		"use server"
@@ -53,11 +55,13 @@ export default async function GalleryPage({
 			extension = "jpeg"
 		}
 
+		const prefix = await getPrefix(user)
+
 		const filenames: Record<FileSizes, string> = {
-			blur: `${username}_photos/${id}.${ratio}.blur.jpeg`,
-			original: `${username}_photos/${id}.${ratio}.original.${extension}`,
-			small: `${username}_photos/${id}.${ratio}.small.jpeg`,
-			heic: `${username}_photos/${id}.${ratio}.heic.heic`,
+			blur: `${prefix}/${id}.${ratio}.blur.jpeg`,
+			original: `${prefix}/${id}.${ratio}.original.${extension}`,
+			small: `${prefix}/${id}.${ratio}.small.jpeg`,
+			heic: `${prefix}/${id}.${ratio}.heic.heic`,
 		}
 		const urls: Record<FileSizes, string> = {
 			blur: await getSignedObjectUploadUrl(filenames.blur),
@@ -83,3 +87,23 @@ export default async function GalleryPage({
 		</Flex>
 	)
 }
+
+const getPrefix = async (user: User) => {
+	const hash = await getSHA256Hash(`${user.name}_photos_${user.id ?? "0000"}`)
+	const prefix = `${user.name}_photos_${hash.substring(0, 10)}`
+	return prefix
+}
+
+const getSHA256Hash = async (input: string) => {
+	const sha256hash = createHash('sha256');
+	return sha256hash.update(input).digest("hex")
+
+
+	// const textAsBuffer = new TextEncoder().encode(input);
+	// const hashBuffer = await window.crypto.subtle.digest("SHA-256", textAsBuffer);
+	// const hashArray = Array.from(new Uint8Array(hashBuffer));
+	// const hash = hashArray
+	//   .map((item) => item.toString(16).padStart(2, "0"))
+	//   .join("");
+	// return hash;
+  };

@@ -10,7 +10,6 @@ export type FileSizes = "original" | "small" | "blur" | "heic"
 
 export type GetSignedUploadUrlFunc = (
 	type: string,
-	username: string,
 	ratio: string,
 ) => Promise<[Record<FileSizes, string>, Record<FileSizes, string>]>
 export type GetSignedFetchUrlFunc = (filename: string) => Promise<string>
@@ -120,7 +119,6 @@ export function useImageQueue(
 
 			const [filenames, uploadUrls] = await getSignedUploadUrl(
 				image.type,
-				username,
 				ratio,
 			)
 

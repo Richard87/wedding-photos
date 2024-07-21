@@ -18,12 +18,14 @@ const validRegex = /[\W_]/g
 export function Login() {
 	const searchParams = useSearchParams()
 	const [username, setUsername] = useState<string>("")
+	const [pin, setPin] = useState<string>("")
 
 	const handleSubmit = async (event: FormEvent) => {
 		event.preventDefault()
-		const cleaned = username.toLowerCase().trim().replace(validRegex, "-");
+		const cleaned = username.toLowerCase().trim().replace(validRegex, "-")
 		await signIn("credentials", {
 			username: cleaned,
+			pin,
 			callbackUrl: `/gallery/${cleaned}`,
 		})
 	}
@@ -31,9 +33,7 @@ export function Login() {
 	return (
 		<form className="space-y-6" onSubmit={handleSubmit}>
 			<FormControl>
-				<Center>
-					<FormLabel>Your Name</FormLabel>
-				</Center>
+				<FormLabel>Your Name</FormLabel>
 				<Input
 					width={"100%"}
 					type="text"
@@ -49,6 +49,19 @@ export function Login() {
 				<FormHelperText>
 					Please use the english alphabet, without spaces, min 4 letters
 				</FormHelperText>
+			</FormControl>
+			<FormControl style={{ marginTop: "30px" }}>
+				<FormLabel>Pin (optional)</FormLabel>
+				<Input
+					width={"100%"}
+					type="text"
+					id="pin"
+					name="pin"
+					autoComplete="off"
+					value={pin}
+					onChange={(e) => setPin(e.target.value)}
+				/>
+				<FormHelperText>You can add a PIN to secure your images</FormHelperText>
 			</FormControl>
 			<Center>
 				<Button variant={"primary"} type="submit">

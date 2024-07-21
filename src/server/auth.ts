@@ -26,15 +26,17 @@ export const authOptions: NextAuthOptions = {
 			name: "Credentials",
 			credentials: {
 				username: { label: "Username", type: "text", placeholder: "username" },
+				pin: { label: "Pin", type: "text", placeholder: "pin" },
 			},
 			async authorize(credentials): Promise<User> {
-				const { username } = credentials as {
+				const { username, pin } = credentials as {
 					username: string
+					pin?: string|null
 				}
 
 				return {
 					email: username,
-					id: username,
+					id: pin ?? "0000",
 					name: username,
 				}
 			},
