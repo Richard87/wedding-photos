@@ -31,8 +31,8 @@ export default async function GalleryPage({
 		return await getSignedObjectFetchUrl(filename)
 	}
 
-	console.log(user)
-	const files = await listObjects(await getPrefix(user))
+	const prefix = await getPrefix(user)
+	const files = await listObjects(`${prefix}/`)
 	const images: Image[] = []
 	for (const file of files) {
 		const url = await getSignedFetchUrl(file.name as string)
